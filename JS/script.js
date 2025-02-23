@@ -1,84 +1,98 @@
-// Actualización del código JavaScript para el manejo del formulario
-document.getElementById('booking-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Recoger los servicios seleccionados
-    const selectedServices = Array.from(document.querySelectorAll('.service-checkbox'))
-        .filter(checkbox => checkbox.checked)
-        .map(checkbox => checkbox.parentElement.querySelector('h3').textContent);
+// Variables globales
+const serviceCards = document.querySelectorAll('.service-card');
+const submitButton = document.getElementById('submitButton');
+const appointmentForm = document.getElementById('appointmentForm');
+const modal = document.getElementById('confirmationModal');
+const dateInput = document.getElementById('date');
+const selectedServices = new Set();
+const WHATSAPP_NUMBER = '+573004804521';
 
-    // Si no hay servicios seleccionados, mostrar mensaje
-    if (selectedServices.length === 0) {
-        alert('Por favor selecciona al menos un servicio');
-        return;
+// Configurar las restricciones de fecha
+function configureDateInput() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const minDate = today.toISOString().split('T')[0];
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 3);
+    
+    dateInput.min = minDate;
+    dateInput.max = maxDate.toISOString().split('T')[0];
+    
+    dateInput.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        dateInput.click();
+    });
+    
+    dateInput.addEventListener('input', validateDate);
+}
+
+// Validar la fecha seleccionada
+function validateDate(e) {
+    const selectedDate = new Date(e.target.value);
+    const dayOfWeek = selectedDate.getDay();
+    
+    if (dayOfWeek === 6 || dayOfWeek === 0) {
+        alert('Lo sentimos, solo atendemos de lunes a viernes. Por favor seleccione otro día.');
+        e.target.value = '';
+        return false;
     }
-
-    // Recoger los datos del formulario
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const phone = document.getElementById('phone').value;
-    const date = document.getElementById('date').value;
-    const time = document.getElementById('time').value;
-    const message = document.getElementById('message').value;
-
-    // Calcular el precio total
-    const totalPrice = Array.from(document.querySelectorAll('.service-checkbox'))
-        .filter(checkbox => checkbox.checked)
-        .reduce((total, checkbox) => total + parseInt(checkbox.dataset.price), 0);
-
-    // Formatear el mensaje para WhatsApp
-    const whatsappMessage = `¡Hola! Quisiera agendar una cita:
     
-*Datos del paciente:*
-📋 Nombre: ${name}
-📧 Email: ${email}
-📱 Teléfono: ${phone}
-📅 Fecha: ${date}
-⏰ Hora: ${time}
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        alert('No se pueden seleccionar fechas pasadas.');
+        e.target.value = '';
+        return false;
+    }
+    
+    return true;
+}
 
-*Servicios seleccionados:*
-${selectedServices.map(service => `✓ ${service}`).join('\n')}
-
-💰 Precio Total: $${totalPrice}
-
-${message ? `*Mensaje adicional:*\n${message}` : ''}`;
-
-    // Codificar el mensaje para URL
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-
-    // Abrir WhatsApp con el mensaje
-    window.open(`https://wa.me/TUNUMERODEWHATSAPP?text=${encodedMessage}`);
-
-    // Limpiar el formulario
-    this.reset();
-    // Limpiar selección de servicios
-    document.querySelectorAll('.service-card').forEach(card => {
-        card.classList.remove('selected-service');
+// Función para formatear fecha
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
-    document.querySelectorAll('.service-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
+}
+
+// Manejador de selección de servicios
+serviceCards.forEach(card => {
+    card.addEventListener('click', () => {
+        card.classList.toggle('selected');
+        const serviceId = card.dataset.id;
+        
+        if (selectedServices.has(serviceId)) {
+            selectedServices.delete(serviceId);
+        } else {
+            selectedServices.add(serviceId);
+        }
+        
+        updateServicesSummary();
+        submitButton.disabled = selectedServices.size === 0;
     });
-    updateServicesSummary();
 });
 
-// Función mejorada para actualizar el resumen de servicios
+// Función para actualizar el resumen de servicios
 function updateServicesSummary() {
-    const checkboxes = document.querySelectorAll('.service-checkbox');
     const summaryDiv = document.getElementById('selected-services-summary');
     const summaryList = document.getElementById('selected-services-list');
     const totalPriceSpan = document.getElementById('total-price');
     
     let totalPrice = 0;
-    let selectedServices = [];
+    let selectedServicesList = [];
 
-    checkboxes.forEach(checkbox => {
-        if (checkbox.checked) {
-            const card = checkbox.parentElement;
+    serviceCards.forEach(card => {
+        if (card.classList.contains('selected')) {
             const serviceName = card.querySelector('h3').textContent;
-            const price = parseInt(checkbox.dataset.price);
-            const duration = checkbox.dataset.duration;
+            const price = parseInt(card.dataset.price);
+            const duration = card.dataset.duration || '60';
             
-            selectedServices.push({
+            selectedServicesList.push({
                 name: serviceName,
                 price: price,
                 duration: duration
@@ -88,17 +102,108 @@ function updateServicesSummary() {
         }
     });
 
-    if (selectedServices.length > 0) {
+    if (selectedServicesList.length > 0) {
         summaryDiv.style.display = 'block';
-        summaryList.innerHTML = selectedServices.map(service => 
-            `<p>${service.name} - $${service.price} (${service.duration} min)</p>`
+        summaryList.innerHTML = selectedServicesList.map(service => 
+            `<p>${service.name} - $${service.price.toLocaleString()} (${service.duration} min)</p>`
         ).join('');
-        totalPriceSpan.textContent = totalPrice;
+        totalPriceSpan.textContent = totalPrice.toLocaleString();
     } else {
-        summaryDiv.style.display = 'block'; // Cambio aquí para siempre mostrar el resumen
+        summaryDiv.style.display = 'block';
         summaryList.innerHTML = '<p>Ningún servicio seleccionado</p>';
         totalPriceSpan.textContent = '0';
     }
 }
 
-// Actualización del HTML para el formulario
+// Función para generar mensaje de WhatsApp
+function generateWhatsAppMessage(formData, selectedServicesList, totalPrice) {
+    return encodeURIComponent(
+        `¡Hola! Quisiera agendar una cita:
+
+*Datos del paciente:*
+📋 Nombre: ${formData.name}
+📧 Email: ${formData.email}
+📱 Teléfono: ${formData.phone}
+📅 Fecha: ${formatDate(formData.date)}
+⏰ Hora: ${formData.time}
+
+*Servicios seleccionados:*
+${selectedServicesList.map(service => `✓ ${service.name} - $${service.price.toLocaleString()}`).join('\n')}
+
+💰 Precio Total: $${totalPrice.toLocaleString()}
+
+${formData.message ? `*Mensaje adicional:*\n${formData.message}` : ''}`
+    );
+}
+
+// Manejador del envío del formulario
+appointmentForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    if (!validateDate({ target: dateInput })) {
+        return;
+    }
+    
+    // Recopilar servicios seleccionados y precio total
+    let selectedServicesList = [];
+    let totalPrice = 0;
+    
+    serviceCards.forEach(card => {
+        if (card.classList.contains('selected')) {
+            selectedServicesList.push({
+                name: card.querySelector('h3').textContent,
+                price: parseInt(card.dataset.price)
+            });
+            totalPrice += parseInt(card.dataset.price);
+        }
+    });
+
+    // Recopilar datos del formulario
+    const formData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        message: document.getElementById('message').value
+    };
+
+    // Generar mensaje y URL de WhatsApp
+    const message = generateWhatsAppMessage(formData, selectedServicesList, totalPrice);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+
+    // Abrir WhatsApp
+    window.open(whatsappUrl, '_blank');
+
+    // Mostrar modal de confirmación
+    showModal();
+
+    // Limpiar formulario y selecciones
+    appointmentForm.reset();
+    serviceCards.forEach(card => card.classList.remove('selected'));
+    selectedServices.clear();
+    submitButton.disabled = true;
+    updateServicesSummary();
+});
+
+// Funciones para el modal
+function showModal() {
+    modal.style.display = 'block';
+}
+
+function closeModal() {
+    modal.style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target === modal) {
+        closeModal();
+    }
+}
+
+// Inicializar las configuraciones al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    configureDateInput();
+    updateServicesSummary();
+});
