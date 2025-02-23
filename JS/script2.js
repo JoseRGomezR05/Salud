@@ -7,7 +7,7 @@ const dateInput = document.getElementById('date');
 const selectedServices = new Set();
 
 // Número de WhatsApp del psicólogo
-const WHATSAPP_NUMBER = '3004804521';
+const WHATSAPP_NUMBER = '+573004804521';
 
 // Configurar las restricciones de fecha
 function configureDateInput() {
