@@ -158,3 +158,205 @@ button:disabled {
         grid-template-columns: 1fr;
     }
 }
+
+/* Añadir a tu archivo CSS para mejorar la experiencia de usuario */
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 767px) {
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .service-card {
+        min-height: 150px;
+    }
+}
+
+/* Mejora en las tarjetas de servicio */
+.service-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+    overflow: hidden;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.service-card.selected {
+    border-color: #4CAF50;
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.service-card.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #4CAF50;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.service-duration {
+    font-style: italic;
+    margin-top: 5px;
+    color: #666;
+}
+
+/* Mejoras al formulario */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+/* Para dispositivos iOS */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-width: thin;
+}
+
+/* Estilos para el botón */
+button[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 20px;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+button[type="submit"]:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Modal mejorado */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    overflow: auto;
+    transition: all 0.3s ease;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal-content.show {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: black;
+}
+
+/* Resumen de servicios seleccionados */
+.summary-container {
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    display: none;
+}
+
+.summary-container.active {
+    display: block;
+}
+
+.total-price-container {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+    text-align: right;
+}
+
+#total-price {
+    font-weight: bold;
+    font-size: 18px;
+    color: #4CAF50;
+}
+
+/* Instrucciones para seleccionar servicios */
+.instructions {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Para dispositivos táctiles */
+.mobile-device .service-card {
+    padding: 15px;
+}
+
+/* Mejora accesibilidad */
+.service-card:focus {
+    outline: 2px solid #007bff;
+}
