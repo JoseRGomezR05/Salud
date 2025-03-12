@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Servicios Psicológicos</title>
     <link rel="stylesheet" href="CSS/styles2.css">
     <link rel="stylesheet" href="CSS/styles.css">
@@ -11,11 +11,8 @@
     <header class="header">
         <h1>Bienestar Emocional</h1>
         <p>Tu camino hacia el equilibrio mental y emocional</p>
-        <!-- fecha -->
-        <script>
-            var f = new Date();
-            document.write(f.getDate() + "/" + (f.getMonth() +1) + "/" + f.getFullYear());
-        </script>
+        <!-- fecha con formato correcto -->
+        <div id="current-date"></div>
     </header>
     <nav class="nav">
         <ul class="nav-links">
@@ -29,81 +26,105 @@
             <header class="inner-header">
                 <h1>Servicios Psicológicos</h1>
                 <p>Encuentra el apoyo profesional que necesitas</p>
+                <p class="instructions">Selecciona los servicios que te interesan tocando las tarjetas</p>
             </header>
             <div class="services-grid">
-                <div class="service-card" data-id="1" data-price="100000" data-duration="90">
+                <div class="service-card" data-id="1" data-price="100000" data-duration="60">
                     <h3>Terapia Individual</h3>
                     <p>Sesiones personalizadas para abordar necesidades específicas</p>
                     <p class="service-duration">Duración: 60 minutos</p>
                     <span class="price">$100.000</span>
                 </div>
-                <div class="service-card" data-id="2" data-price="100000">
+                <div class="service-card" data-id="2" data-price="100000" data-duration="90">
                     <h3>Terapia de Pareja</h3>
                     <p>Mejora tu relación con asesoramiento profesional</p>
+                    <p class="service-duration">Duración: 90 minutos</p>
                     <span class="price">$100.000</span>
                 </div>
-                <div class="service-card" data-id="3"       data-price="120000">
+                <div class="service-card" data-id="3" data-price="120000" data-duration="90">
                     <h3>Terapia Familiar</h3>
                     <p>Resolución de conflictos y mejora de la dinámica familiar</p>
+                    <p class="service-duration">Duración: 90 minutos</p>
                     <span class="price">$120.000</span>
                 </div>
-                <div class="service-card" data-id="4" data-price="120000">
-                    <h3>Terapia Grupales</h3>
-                    <p>Tratar Problemas Emocionales, de Adicciones, psicoeducacion, conciencia de enfermedad entre otras </p>
+                <div class="service-card" data-id="4" data-price="120000" data-duration="60">
+                    <h3>Terapias Grupales</h3>
+                    <p>Tratar problemas emocionales, adicciones, psicoeducación y conciencia de enfermedad</p>
+                    <p class="service-duration">Duración: 60 minutos</p>
                     <span class="price">$120.000</span>
                 </div>
-                <div class="service-card" data-id="5" data-price="150000">
+                <div class="service-card" data-id="5" data-price="150000" data-duration="120">
                     <h3>Evaluación Psicológica</h3>
-                    <p>orientacion completo de la salud mental</p>
+                    <p>Evaluación completa para diagnóstico de trastornos emocionales y del comportamiento</p>
+                    <p class="service-duration">Duración: 120 minutos</p>
                     <span class="price">$150.000</span>
                 </div>
-                <div class="service-card" data-id="5" data-price="150000">
-                    <h3>Evaluación Psicológica</h3>
-                    <p>Evaluación psicológica para diagnóstico de trastornos emocionales y del comportamiento.</p>
-                    <span class="price">$150.000</span>
-                </div>
-                <div class="service-card" data-id="6" data-price="80000">
-                    <h3> Terapias Online</h3>
-                    <p>Todo tipo de terapia</p>
+                <div class="service-card" data-id="6" data-price="80000" data-duration="60">
+                    <h3>Terapias Online</h3>
+                    <p>Todo tipo de terapia en formato virtual</p>
+                    <p class="service-duration">Duración: 60 minutos</p>
                     <span class="price">$80.000</span>
                 </div>
-                <div class="service-card" data-id="7" data-price="120000">
+                <div class="service-card" data-id="7" data-price="120000" data-duration="90">
                     <h3>Psicoterapia</h3>
                     <p>Diagnóstico completo de la salud mental</p>
+                    <p class="service-duration">Duración: 90 minutos</p>
                     <span class="price">$120.000</span>
                 </div>
-                <div class="service-card" data-id="5" data-price="60000">
+                <div class="service-card" data-id="8" data-price="60000" data-duration="60">
                     <h3>Terapia ABA</h3>
-                    <p>Tratar comportamiento</p>
+                    <p>Tratamiento de comportamiento aplicado</p>
+                    <p class="service-duration">Duración: 60 minutos</p>
                     <span class="price">$60.000</span>
                 </div>
             </div>
             <div class="booking-form">
                 <h2>Agenda tu Cita</h2>
+                <div id="selected-services-summary" class="summary-container"></div>
                 <form id="appointmentForm">
                     <div class="form-grid">
-                        <input type="text" id="name" placeholder="Nombre completo" required>
-                        <input type="tel" id="phone" placeholder="Teléfono" required>
-                        <input type="email" id="email" placeholder="Correo electrónico" required>
-                        <input type="date" id="date" required>
-                        <select id="time" required>
-                            <option value="">Seleccione una hora</option>
-                            <option value="8:00">8:00 AM</option>
-                            <option value="8:45">8:45 AM</option>
-                            <option value="9:30">9:30 AM</option>
-                            <option value="10:15">10:15 AM</option>
-                            <option value="11:00">11:00 AM</option>
-                            <option value="13:00">1:00 PM</option>
-                            <option value="13:45">1:45 PM</option>
-                            <option value="14:30">2:30 PM</option>
-                            <option value="15:15">3:15 PM</option>
-                            <option value="16:00">4:00 PM</option>
-                            <option value="16:45">4:45 PM</option>
-                            <option value="17:30">5:30 PM</option>
-                        </select>
-                        
+                        <div class="form-group">
+                            <label for="name">Nombre completo</label>
+                            <input type="text" id="name" placeholder="Nombre completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" placeholder="Teléfono" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo electrónico</label>
+                            <input type="email" id="email" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Fecha de la cita</label>
+                            <input type="date" id="date" placeholder="Selecciona fecha" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="time">Hora de la cita</label>
+                            <select id="time" required>
+                                <option value="">Seleccione una hora</option>
+                                <option value="8:00 AM">8:00 AM</option>
+                                <option value="8:45 AM">8:45 AM</option>
+                                <option value="9:30 AM">9:30 AM</option>
+                                <option value="10:15 AM">10:15 AM</option>
+                                <option value="11:00 AM">11:00 AM</option>
+                                <option value="1:00 PM">1:00 PM</option>
+                                <option value="1:45 PM">1:45 PM</option>
+                                <option value="2:30 PM">2:30 PM</option>
+                                <option value="3:15 PM">3:15 PM</option>
+                                <option value="4:00 PM">4:00 PM</option>
+                                <option value="4:45 PM">4:45 PM</option>
+                                <option value="5:30 PM">5:30 PM</option>
+                            </select>
+                        </div>
                     </div>
-                    <textarea id="message" placeholder="Mensaje adicional"></textarea>
+                    <div class="form-group">
+                        <label for="message">Mensaje adicional (opcional)</label>
+                        <textarea id="message" placeholder="Mensaje adicional"></textarea>
+                    </div>
+                    <div class="total-price-container">
+                        <div id="total-price">Total: $0</div>
+                    </div>
                     <button type="submit" id="submitButton" disabled>Reservar Cita</button>
                 </form>
             </div>
@@ -111,13 +132,23 @@
     </main>
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
+            <span class="close-button">&times;</span>
             <h2>¡Gracias por agendar tu cita!</h2>
             <p>Recuerda asistir 15 minutos antes a tu cita.</p>
             <p>Te contactaremos pronto para confirmar los detalles.</p>
             <button onclick="closeModal()">Aceptar</button>
         </div>
     </div>
-    <script src="JS/script2.js"></script>
+
+    <!-- Agregar este script para la fecha -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date();
+            document.getElementById('current-date').textContent = today.toLocaleDateString('es-ES', options);
+        });
+    </script>
     
+    <script src="JS/script2.js"></script>
 </body>
 </html>
