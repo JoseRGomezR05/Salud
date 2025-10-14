@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atención Virtual | Bienestar Emocional</title>
+    <style>
+        /* Estilos generales que coinciden con el diseño actual */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        
+        .header {
+            background-color: #3182ce;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .navigation {
+            background-color: white;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .navigation a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #2d3748;
+            font-weight: 500;
+        }
+        
+        .container {
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        /* Estilos específicos para la sección de atención virtual */
+        .virtual-care {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            gap: 30px;
+        }
+        
+        .video-section {
+            flex: 2;
+            display: flex;
+            min-width: 300px;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .chat-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+        
+        .video-container {
+            flex: 1;
+            width: 100%;
+            height: 300px;
+            background-color: #1a202c;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .main-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #333;
+        }
+        
+        .self-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 180px;
+            height: 120px;
+            border-radius: 8px;
+            border: 2px solid #fff;
+            background-color: #555;
+            object-fit: cover;
+            z-index: 10;
+        }
+        
+        .video-controls {
+            display: flex;
+            justify-content: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+        }
+
+        .control-btn {
+            margin: 0 10px;
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            background-color: #2c5282;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            margin-left: auto;
+            background-color: #3182ce;
+            color: white;
+            padding: 10px;
+            border-radius: 15px 15px 0 15px;
+        }
+        
+        .message.assistant {
+            background-color: #e2e8f0;
+            padding: 10px;
+            border-radius: 15px 15px 15px 0;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #e2e8f0;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .upload-btn, .send-btn {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .upload-btn {
+            margin-right: 5px;
+        }
+        
+        /* Sección de IA */
+        .ai-assistant {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 30px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        .ai-header {
+            padding: 15px;
+            background-color: #3182ce;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #050c07;
+        }
+        
+        .ai-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #3182ce;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            margin-right: 10px;
+        }
+        
+        .ai-chat {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ai-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f8fafc;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .ai-message {
+            background-color: #e9ecef;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .user-message {
+            background-color: #4c6ef5;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-input {
+            display: flex;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .ai-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            margin-right: 10px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .ai-input-field:focus {
+            border-color: #4c6ef5;
+        }
+        
+        .send-btn {
+    margin-left: 10px;
+    padding: 12px 20px;
+    background-color: #4c6ef5;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.send-btn:hover {
+    background-color: #3b5bd9;
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .self-video {
+        width: 120px;
+        height: 80px;
+    }
+}
+
+.status-indicator {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .virtual-care {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header similar al de la página original -->
+    <div class="header">
+        <h1>Bienestar Emocional</h1>
+        <p>Tu camino hacia el equilibrio mental y emocional</p>
+        <p>13/3/2025</p>
+    </div>
+    
+    <!-- Navegación similar a la original -->
+    <div class="navigation">
+        <a href="index.html">Inicio</a>
+        <a href="perfil.html">Perfil Profesional</a>
+        <a href="Agendas.html">Agendar Cita</a>
+        <a href="" style="color: #3182ce; font-weight: bold;">Atención Virtual</a>
+    </div>
+    
+    
+    
+    <div class="container">
+        <h2>Atención Virtual</h2>
+        <p>Conecta con nuestros profesionales a través de videoconferencia o chat para recibir atención psicológica desde cualquier lugar.</p>
+        
+        <div class="virtual-care">
+            <!-- Sección de videollamada -->
+            <div class="video-section">
+                <h3>Consulta por Videollamada</h3>
+                <p>Mantén sesiones cara a cara con tu psicólogo de forma virtual.</p>
+                
+                <div class="video-container">
+                    <div class="status-indicator">En línea</div>
+                    <video class="main-video" id="remoteVideo" autoplay></video>
+                    <video class="self-video" id="localVideo" autoplay muted></video>
+                </div>
+                
+                <div class="video-controls">
+                    <button class="control-btn" id="muteBtn" title="Silenciar">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="videoBtn" title="Desactivar video">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn end-call" id="endCallBtn" title="Finalizar llamada">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="screenShareBtn" title="Compartir pantalla">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <nav class="nav">
+                    <ul class="nav-links">
+                        <button class="control-btn">Agendar Nueva Consulta</button>
+                    </ul>
+                </nav>
+                
+            </div>
+            
+            <!-- Sección de chat -->
+            <div class="chat-section">
+                <div class="chat-messages">
+                    <div class="message assistant">
+                        Bienvenido/a a la sala de chat de Bienestar Emocional. ¿En qué puedo ayudarte hoy?
+                    </div>
+                    <div class="message user">
+                        Hola, quisiera información sobre las terapias disponibles.
+                    </div>
+                    <div class="message assistant">
+                        Claro, ofrecemos terapia individual, de pareja y familiar. ¿Tienes alguna necesidad específica sobre la que quieras hablar?
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <button class="upload-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                        </svg>
+                    </button>
+                    <input type="text" placeholder="Escribe tu mensaje aquí...">
+                    <button class="send-btn">Enviar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de asistente IA -->
+        <div class="ai-assistant">
+            <div class="ai-header">
+                <div class="ai-avatar">IA</div>
+                <h3>Asistente Virtual</h3>
+            </div>
+            <p>Nuestro asistente virtual está disponible 24/7 para responder preguntas frecuentes y ayudarte a programar citas.</p>
+            
+            <div class="ai-chat">
+                <div class="ai-messages">
+                    <div class="message assistant">
+                        Hola, soy el asistente virtual de Bienestar Emocional. Puedo ayudarte con información sobre nuestros servicios, horarios disponibles o responder preguntas frecuentes sobre salud mental. ¿En qué puedo ayudarte hoy?
+                    </div>
+                </div>
+                
+                <div class="ai-input">
+                    <input type="text" placeholder="Hazle una pregunta a nuestro asistente virtual...">
+                    <button class="send-btn">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Script básico para simular la funcionalidad de chat
+        document.addEventListener('DOMContentLoaded', function() {
+            // Función para los chats (tanto normal como IA)
+            function setupChat(inputSelector, messagesSelector, btnSelector, isAI) {
+                const input = document.querySelector(inputSelector);
+                const messages = document.querySelector(messagesSelector);
+                const sendBtn = document.querySelector(btnSelector);
+                
+                sendBtn.addEventListener('click', function() {
+                    if (input.value.trim() !== '') {
+                        // Añadir mensaje del usuario
+                        const userMsg = document.createElement('div');
+                        userMsg.className = 'message user';
+                        userMsg.textContent = input.value;
+                        messages.appendChild(userMsg);
+                        
+                        // Simular respuesta (en un caso real, aquí conectarías con backend/API)
+                        setTimeout(function() {
+                            const aiMsg = document.createElement('div');
+                            aiMsg.className = 'message assistant';
+                            
+                            if (isAI) {
+                                aiMsg.textContent = "Gracias por tu pregunta. Estoy procesando tu consulta y te responderé en breve.";
+                            } else {
+                                aiMsg.textContent = "Tu mensaje ha sido recibido. Un profesional te responderá pronto.";
+                            }
+                            
+                            messages.appendChild(aiMsg);
+                            messages.scrollTop = messages.scrollHeight;
+                        }, 1000);
+                        
+                        input.value = '';
+                        messages.scrollTop = messages.scrollHeight;
+                    }
+                });
+                
+                // Permitir envío con Enter
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendBtn.click();
+                    }
+                });
+            }
+            
+            // Configurar ambos chats
+            setupChat('.chat-input input', '.chat-messages', '.chat-input .send-btn', false);
+            setupChat('.ai-input input', '.ai-messages', '.ai-input .send-btn', true);
+            
+            // Simulación básica de botones de videollamada
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    alert('Esta función sería implementada con una API de videollamadas como Twilio, Zoom o WebRTC.');
+                });
+            });
+            
+            // Simulación de carga de documentos
+            document.querySelector('.upload-btn').addEventListener('click', function() {
+                alert('Aquí se abriría un selector de archivos para cargar documentos.');
+            });
+    </script>
+    <script src="JS/virtual.js"></script>
+</body>
+</html>
