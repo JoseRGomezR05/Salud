@@ -1,0 +1,538 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #667eea;
+    --primary-dark: #764ba2;
+    --secondary-color: #2c3e50;
+    --light-bg: #f5f7fa;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --success: #27ae60;
+    --warning: #e74c3c;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* HEADER */
+.header {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
+    color: white;
+    padding: 40px 30px;
+    text-align: center;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    animation: slideDown 0.6s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header-content h1 {
+    font-size: 2.8em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.header-content h1 i {
+    margin-right: 10px;
+    color: #e74c3c;
+}
+
+.header-content p {
+    font-size: 1.2em;
+    opacity: 0.95;
+    font-weight: 300;
+}
+
+/* NAVEGACIÓN */
+.nav {
+    background: white;
+    padding: 0;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.nav-links li {
+    flex: 1;
+    min-width: 150px;
+}
+
+.nav-links li a {
+    display: block;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+    text-align: center;
+}
+
+.nav-links li a i {
+    margin-right: 8px;
+}
+
+.nav-links li a:hover {
+    color: var(--primary-color);
+    background: var(--light-bg);
+}
+
+.nav-links li.active a {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* CONTENEDOR */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* SECCIÓN DE PAGOS */
+.payment-section {
+    background: white;
+    padding: 50px 40px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-header h2 {
+    color: var(--text-dark);
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.section-header h2 i {
+    margin-right: 15px;
+    color: var(--primary-color);
+}
+
+.section-subtitle {
+    color: var(--text-light);
+    font-size: 1.1em;
+    font-weight: 300;
+}
+
+/* GRID DE MÉTODOS DE PAGO */
+.payment-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+/* TARJETA DE PAGO */
+.payment-card {
+    background: linear-gradient(135deg, var(--light-bg) 0%, #e8eef7 100%);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+}
+
+.payment-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+    border-color: var(--primary-color);
+}
+
+.payment-card.bancolombia::before {
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+}
+
+.payment-card.nequi::before {
+    background: linear-gradient(90deg, #667eea, #5a67d8);
+}
+
+.payment-card.davivienda::before {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.card-header {
+    margin-bottom: 25px;
+}
+
+.bank-icon {
+    font-size: 4em;
+    margin-bottom: 15px;
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: var(--primary-color);
+}
+
+.payment-card.bancolombia .bank-icon {
+    color: #FFD700;
+}
+
+.payment-card.nequi .bank-icon {
+    color: #667eea;
+}
+
+.payment-card.davivienda .bank-icon {
+    color: #e74c3c;
+}
+
+.card-header h3 {
+    color: var(--text-dark);
+    margin-top: 15px;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+/* DETALLES DE PAGO */
+.payment-details {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.detail-item {
+    margin-bottom: 20px;
+}
+
+.detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.detail-label {
+    font-weight: 700;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+.detail-label i {
+    margin-right: 8px;
+}
+
+.detail-value {
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    background: #f0f0f0;
+    padding: 12px;
+    border-radius: 8px;
+    display: block;
+    margin: 8px 0;
+    font-size: 0.95em;
+    border-left: 4px solid var(--primary-color);
+    color: var(--text-dark);
+}
+
+/* BOTÓN COPIAR */
+.copy-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.copy-btn:active {
+    transform: translateY(0);
+}
+
+.copy-btn i {
+    margin-right: 6px;
+}
+
+/* CONTENEDOR QR */
+.qr-container {
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+}
+
+.qr-container p {
+    color: var(--text-dark);
+    font-weight: 700;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+}
+
+.qr-container p i {
+    margin-right: 8px;
+}
+
+.qr-image {
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    border: 3px solid var(--primary-color);
+    transition: transform 0.3s ease;
+}
+
+.qr-image:hover {
+    transform: scale(1.05);
+}
+
+/* CAJA DE INFORMACIÓN */
+.info-box {
+    background: linear-gradient(135deg, #e8f4f8 0%, #f0e8f8 100%);
+    border-left: 5px solid var(--primary-color);
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 40px;
+}
+
+.info-box h3 {
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.info-box h3 i {
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.info-box ul {
+    list-style: none;
+}
+
+.info-box li {
+    padding: 8px 0;
+    color: var(--text-dark);
+    position: relative;
+    padding-left: 25px;
+}
+
+.info-box li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success);
+    font-weight: bold;
+}
+
+.info-box strong {
+    color: var(--primary-color);
+}
+
+/* FOOTER */
+.footer {
+    background: var(--secondary-color);
+    color: white;
+    padding: 40px 30px 20px;
+    border-radius: 15px;
+    margin-top: 30px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.footer-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.footer-section h4 i {
+    margin-right: 8px;
+}
+
+.footer-section p {
+    font-size: 0.95em;
+    opacity: 0.9;
+}
+
+.footer-section a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-section a:hover {
+    color: var(--primary-color);
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* NOTIFICACIONES */
+.notificacion {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95em;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 400px;
+}
+
+.notificacion.mostrar {
+    opacity: 1;
+}
+
+.notificacion-success {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    border-left: 4px solid #1e8449;
+}
+
+.notificacion-error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border-left: 4px solid #a93226;
+}
+
+.notificacion-info {
+    background: linear-gradient(135deg, #667eea, #5a67d8);
+    color: white;
+    border-left: 4px solid #4c51bf;
+}
+
+.notificacion-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .header-content h1 {
+        font-size: 2em;
+    }
+
+    .section-header h2 {
+        font-size: 1.8em;
+    }
+
+    .payment-methods {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .payment-section {
+        padding: 30px 20px;
+    }
+
+    .nav {
+        position: relative;
+        top: auto;
+    }
+
+    .nav-links {
+        flex-direction: column;
+    }
+
+    .nav-links li {
+        width: 100%;
+    }
+
+    .nav-links li a {
+        border-bottom: 1px solid #e0e0e0;
+        border-right: none;
+    }
+
+    .bank-icon {
+        font-size: 3em;
+        width: 70px;
+        height: 70px;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
