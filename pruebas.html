@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienestar Emocional | Pruebas Psicológicas</title>
+    <link rel="stylesheet" href="CSS/pruebas.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Bienestar Emocional</h1>
+        <p>Pruebas Psicológicas para tu Evaluación</p>
+        <p id="fecha"></p>
+    </header>
+
+    <nav class="nav">
+        <ul class="nav-links">
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="perfil.html">Perfil Profesional</a></li>
+            <li><a href="Agendas.html">Agendar Cita</a></li>
+            <li><a href="virtual.html">Atencion Virtual</a></li>
+            <li><a href="pruebas.html">Pruebas</a></li>
+            <li><a href="pagos2.html">Realiza Pagos</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <section class="pruebas-section">
+            <h2>Pruebas Psicológicas Disponibles</h2>
+            
+            <div class="pruebas-categorias">
+                <!-- DEPRESIÓN -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😔</span>
+                            Depresión
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="beck.html" class="prueba-item">Depresión de Beck</a>
+                        <a href="pruebas/escala_depresion_gds.html" class="prueba-item">Escala de Depresión GDS</a>
+                        <a href="pruebas/phq9.html" class="prueba-item">PHQ-9</a>
+                    </div>
+                </div>
+
+                <!-- ANSIEDAD -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😰</span>
+                            Ansiedad
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="pruebas/ansiedad_beck.html" class="prueba-item">Escala de Ansiedad de Beck</a>
+                        <a href="pruebas/gad7.html" class="prueba-item">GAD-7</a>
+                        <a href="pruebas/stai.html" class="prueba-item">STAI (Inventario de Ansiedad Rasgo-Estado)</a>
+                    </div>
+                </div>
+
+                <!-- ESTRÉS -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😣</span>
+                            Estrés
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="pruebas/escala_estres_percibido.html" class="prueba-item">Escala de Estrés Percibido (PSS)</a>
+                        <a href="pruebas/escala_estres_laboral.html" class="prueba-item">Escala de Estrés Laboral</a>
+                        <a href="pruebas/burnout.html" class="prueba-item">Test de Burnout de Maslach</a>
+                    </div>
+                </div>
+
+                <!-- AUTOESTIMA -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">💪</span>
+                            Autoestima
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="pruebas/rosenberg.html" class="prueba-item">Escala de Autoestima de Rosenberg</a>
+                        <a href="pruebas/escala_autoestima_coopersmith.html" class="prueba-item">Escala de Coopersmith</a>
+                    </div>
+                </div>
+
+                <!-- SUEÑO -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😴</span>
+                            Calidad del Sueño
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="pruebas/psqi.html" class="prueba-item">Índice de Calidad del Sueño (PSQI)</a>
+                        <a href="pruebas/insomnia_severity.html" class="prueba-item">Escala de Severidad del Insomnio</a>
+                    </div>
+                </div>
+
+                <!-- BIENESTAR GENERAL -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😊</span>
+                            Bienestar General
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="pruebas/escala_bienestar.html" class="prueba-item">Escala de Bienestar Psicológico</a>
+                        <a href="pruebas/life_satisfaction.html" class="prueba-item">Escala de Satisfacción con la Vida</a>
+                        <a href="pruebas/whoqol.html" class="prueba-item">WHOQOL (Calidad de Vida)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="JS/pruebas.js"></script>
+</body>
+</html>
