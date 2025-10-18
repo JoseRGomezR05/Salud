@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Depresión de Beck</title>
+    <link rel="stylesheet" href="CSS/beck.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Inventario de Depresión de Beck</h1>
+            <p class="subtitle">Por favor, completa tu información y selecciona la opción que mejor describes cómo te has sentido esta última semana.</p>
+            
+            <!-- Sección de datos del paciente -->
+            <div class="patient-info-section">
+                <h3>Información del Paciente</h3>
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo:</label>
+                    <input type="text" id="nombre" placeholder="Ingresa tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="identificacion">Número de Identificación:</label>
+                    <input type="text" id="identificacion" placeholder="Ingresa tu número de cédula o identificación" required>
+                </div>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="progress-section">
+                <p class="progress-text">Progreso: <span id="answered">0</span> de 21 preguntas respondidas</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Contenedor de preguntas -->
+            <div id="questionsContainer" class="questions-container"></div>
+
+            <!-- Resultado -->
+            <div class="result-section">
+                <div class="result-card">
+                    <p class="result-label">Puntuación Total:</p>
+                    <p class="result-score" id="totalScore">0</p>
+                    <p class="result-interpretation" id="interpretation">Completa todas las preguntas</p>
+                    <p class="result-warning" id="warningText" style="display: none;">⚠️ Una puntuación de 17 o más indica que puede necesitar ayuda profesional.</p>
+                </div>
+
+                <button id="sendBtn" class="send-button" disabled>
+                    📱 Enviar por WhatsApp
+                </button>
+                <p id="sendMessage" class="send-message">Completa todas las preguntas y tu información para enviar</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="JS/beck.js"></script>
+</body>
+</html>
