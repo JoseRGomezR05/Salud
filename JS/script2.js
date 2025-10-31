@@ -1,13 +1,13 @@
 // Variables globales
 const serviceCards = document.querySelectorAll('.service-card');
+const professionalCards = document.querySelectorAll('.professional-card');
 const submitButton = document.getElementById('submitButton');
 const appointmentForm = document.getElementById('appointmentForm');
 const modal = document.getElementById('confirmationModal');
 const dateInput = document.getElementById('date');
 const selectedServices = new Set();
-
-// Número de WhatsApp del psicólogo
-const WHATSAPP_NUMBER = '+573004804521';
+let selectedProfessional = null;
+let selectedProfessionalPhone = null;
 
 // Configurar las restricciones de fecha
 function configureDateInput() {
@@ -82,6 +82,28 @@ function validateDate(e) {
     }
 }
 
+// Selección de profesionales
+professionalCards.forEach(card => {
+    card.setAttribute('tabindex', '0');
+    
+    const toggleProfessionalSelection = () => {
+        professionalCards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedProfessional = card.querySelector('h3').textContent;
+        selectedProfessionalPhone = card.dataset.phone;
+        updateSubmitButtonState();
+        updateServicesSummary();
+    };
+    
+    card.addEventListener('click', toggleProfessionalSelection);
+    card.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleProfessionalSelection();
+        }
+    });
+});
+
 // Mejorar la experiencia de usuario al seleccionar servicios
 serviceCards.forEach(card => {
     // Agregar evento de teclado para accesibilidad
@@ -122,8 +144,9 @@ function updateSubmitButtonState() {
     const isDateSelected = dateInput.value !== '';
     const isTimeSelected = document.getElementById('time').value !== '';
     const isServiceSelected = selectedServices.size > 0;
+    const isProfessionalSelected = selectedProfessional !== null;
     
-    submitButton.disabled = !(isDateSelected && isTimeSelected && isServiceSelected);
+    submitButton.disabled = !(isDateSelected && isTimeSelected && isServiceSelected && isProfessionalSelected);
     
     // Cambiar estilo visual según estado
     if (submitButton.disabled) {
@@ -182,20 +205,21 @@ function generateWhatsAppMessage(formData) {
     
     return encodeURIComponent(
         `🔵 *Nueva Reserva de Cita*\n\n` +
+        `👨‍⚕️ *Profesional:* ${selectedProfessional}\n` +
         `👤 *Nombre:* ${formData.name}\n` +
         `📞 *Teléfono:* ${formData.phone}\n` +
         `📧 *Email:* ${formData.email}\n` +
         `📅 *Fecha:* ${formatDate(formData.date)}\n` +
         `⏰ *Hora:* ${formData.time}\n` +
-        `🔍 *Servicios Seleccionados:*\n• ${getSelectedServicesText()}\n` +
+        `🏥 *Servicios Seleccionados:*\n• ${getSelectedServicesText()}\n` +
         `💰 *Precio Total:* ${formattedPrice}\n` +
         `💭 *Mensaje:* ${formData.message || 'No se incluyó mensaje adicional'}`
     );
 }
 
-// Función para abrir modal
+// Función para abrir modal - CAMBIADO A FLEX
 function showModal() {
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     
     // Añadir clase para animación de entrada
     setTimeout(() => {
@@ -228,6 +252,12 @@ function setupFormValidation() {
 appointmentForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
+    // Validar que se haya seleccionado un profesional
+    if (!selectedProfessional || !selectedProfessionalPhone) {
+        alert('Por favor selecciona un profesional antes de continuar.');
+        return;
+    }
+    
     // Validar fecha antes de enviar
     if (!validateDate({ target: dateInput })) {
         return;
@@ -245,7 +275,7 @@ appointmentForm.addEventListener('submit', (e) => {
 
     // Generar mensaje y URL de WhatsApp
     const message = generateWhatsAppMessage(formData);
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    const whatsappUrl = `https://wa.me/${selectedProfessionalPhone}?text=${message}`;
 
     // Enviar a WhatsApp
     window.open(whatsappUrl, '_blank');
@@ -256,7 +286,10 @@ appointmentForm.addEventListener('submit', (e) => {
     // Limpiar formulario
     appointmentForm.reset();
     serviceCards.forEach(card => card.classList.remove('selected'));
+    professionalCards.forEach(card => card.classList.remove('selected'));
     selectedServices.clear();
+    selectedProfessional = null;
+    selectedProfessionalPhone = null;
     updateSubmitButtonState();
     updateServicesSummary();
 });
@@ -275,8 +308,10 @@ function updateServicesSummary() {
     const summaryContainer = document.getElementById('selected-services-summary');
     const selectedCards = Array.from(serviceCards).filter(card => card.classList.contains('selected'));
     
-    if (selectedCards.length > 0) {
-        let summaryHTML = '<h3>Servicios seleccionados:</h3><ul>';
+    if (selectedCards.length > 0 && selectedProfessional) {
+        let summaryHTML = '<h3>Resumen de tu cita:</h3>';
+        summaryHTML += `<p><strong>Profesional:</strong> ${selectedProfessional}</p>`;
+        summaryHTML += '<h4>Servicios seleccionados:</h4><ul>';
         
         selectedCards.forEach(card => {
             const serviceName = card.querySelector('h3').textContent;
@@ -398,10 +433,7 @@ function enhanceTouchExperience() {
             // Corregir problemas específicos de iOS con los inputs de fecha
             const dateInputs = document.querySelectorAll('input[type="date"]');
             dateInputs.forEach(input => {
-                // Prevenir el comportamiento predeterminado y usar un enfoque más compatible
                 input.addEventListener('touchstart', function(e) {
-                    // En algunos casos, puede ser necesario prevenir el comportamiento predeterminado
-                    // e.preventDefault();
                     this.focus();
                 });
             });
@@ -439,20 +471,6 @@ function loadSavedFormData() {
     if (localStorage.getItem('appointment_phone')) {
         phoneInput.value = localStorage.getItem('appointment_phone');
     }
-}
-
-// Función para mostrar horas disponibles visualmente
-function showAvailableTimeSlots() {
-    const timeSelect = document.getElementById('time');
-    
-    // Añadir clase visual a las opciones disponibles/no disponibles
-    Array.from(timeSelect.options).forEach(option => {
-        if (option.disabled) {
-            option.classList.add('unavailable');
-        } else {
-            option.classList.add('available');
-        }
-    });
 }
 
 // Inicializar todas las funcionalidades al cargar la página
