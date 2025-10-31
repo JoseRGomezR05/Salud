@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Servicios Psicológicos</title>
     <link rel="stylesheet" href="CSS/styles2.css">
-    <link rel="stylesheet" href="CSS/styles.css">
 </head>
 <body>
     <header class="header">
@@ -21,10 +20,34 @@
             <li><a href="Agendas.html">Agendar Cita</a></li>
             <li><a href="virtual.html">Atencion Virtual</a></li>
             <li><a href="pruebas.html">Pruebas</a></li>
-            <li><a href="pagos.html">Realiza tu Pago</a></li>
+            <li><a href="pagos2.html">Realiza Pagos</a></li>
         </ul>
     </nav>
     <main>
+        <!-- Sección de Profesionales -->
+        <div class="professionals-section">
+            <h2>Selecciona tu Profesional</h2>
+            <div class="professionals-grid">
+                <div class="professional-card" data-phone="+573004804521">
+                    <h3>José Rafael Gómez</h3>
+                    <p><strong>Psicólogo Clínico</strong></p>
+                    <p>📞 300 480 4521</p>
+                    <p class="specialties">Terapia individual, de pareja y familiar</p>
+                </div>
+                <div class="professional-card" data-phone="+573012344124">
+                    <h3>Laura Torregrosa Sanjuanelo</h3>
+                    <p><strong>Psicóloga Clínica</strong></p>
+                    <p>📞 301 234 4124</p>
+                    <p class="specialties">Terapia infantil y juvenil, trastornos de ansiedad</p>
+                </div>
+                <div class="professional-card" data-phone="+573146244752">
+                    <h3>Melissa Genis Ruiz</h3>
+                    <p><strong>Psicóloga</strong></p>
+                    <p>📞 314 624 4752</p>
+                    <p class="specialties">Terapia cognitivo-conductual, adicciones</p>
+                </div>
+            </div>
+        </div>
         <div class="container">
             <header class="inner-header">
                 <h1>Servicios Psicológicos</h1>
@@ -35,32 +58,20 @@
                 <div class="service-card" data-id="1" data-price="100000" data-duration="60">
                     <h3>Terapia Individual</h3>
                     <p>Sesiones personalizadas para abordar necesidades específicas</p>
-                    <p class="service-duration">Duración: 45 minutos</p>
-                    <span class="price">$120.000</span>
-                </div>
-                <div class="service-card" data-id="6" data-price="80000" data-duration="60">
-                    <h3>Terapia individual Online</h3>
-                    <p>Todo tipo de terapia en formato virtual</p>
-                    <p class="service-duration">Duración: 45 minutos</p>
-                    <span class="price">$80.000</span>
+                    <p class="service-duration">Duración: 60 minutos</p>
+                    <span class="price">$100.000</span>
                 </div>
                 <div class="service-card" data-id="2" data-price="100000" data-duration="90">
                     <h3>Terapia de Pareja</h3>
                     <p>Mejora tu relación con asesoramiento profesional</p>
-                    <p class="service-duration">Duración: 60 - 90 minutos</p>
-                    <span class="price">$150.000</span>
+                    <p class="service-duration">Duración: 90 minutos</p>
+                    <span class="price">$100.000</span>
                 </div>
                 <div class="service-card" data-id="3" data-price="120000" data-duration="90">
                     <h3>Terapia Familiar</h3>
                     <p>Resolución de conflictos y mejora de la dinámica familiar</p>
-                    <p class="service-duration">Duración: 60 - 90 minutos</p>
-                    <span class="price">$150.000</span>
-                </div>
-                <div class="service-card" data-id="3" data-price="120000" data-duration="90">
-                    <h3>Terapia Familiar virtual</h3>
-                    <p>Resolución de conflictos y mejora de la dinámica familiar</p>
-                    <p class="service-duration">Duración: 60 - 90 minutos</p>
-                    <span class="price">$100.000</span>
+                    <p class="service-duration">Duración: 90 minutos</p>
+                    <span class="price">$120.000</span>
                 </div>
                 <div class="service-card" data-id="4" data-price="120000" data-duration="60">
                     <h3>Terapias Grupales</h3>
@@ -69,21 +80,27 @@
                     <span class="price">$120.000</span>
                 </div>
                 <div class="service-card" data-id="5" data-price="150000" data-duration="120">
-                    <h3>Valoracion Psicológica en 1 entorno</h3>
+                    <h3>Evaluación Psicológica</h3>
                     <p>Evaluación completa para diagnóstico de trastornos emocionales y del comportamiento</p>
-                    <p class="service-duration">Duración: 45 - 120 minutos</p>
+                    <p class="service-duration">Duración: 120 minutos</p>
                     <span class="price">$150.000</span>
+                </div>
+                <div class="service-card" data-id="6" data-price="80000" data-duration="60">
+                    <h3>Terapias Online</h3>
+                    <p>Todo tipo de terapia en formato virtual</p>
+                    <p class="service-duration">Duración: 60 minutos</p>
+                    <span class="price">$80.000</span>
                 </div>
                 <div class="service-card" data-id="7" data-price="120000" data-duration="90">
                     <h3>Psicoterapia</h3>
                     <p>Diagnóstico completo de la salud mental</p>
-                    <p class="service-duration">Duración: 45 - 60 minutos</p>
+                    <p class="service-duration">Duración: 90 minutos</p>
                     <span class="price">$120.000</span>
                 </div>
                 <div class="service-card" data-id="8" data-price="60000" data-duration="60">
                     <h3>Terapia ABA</h3>
                     <p>Tratamiento de comportamiento aplicado</p>
-                    <p class="service-duration">Duración: 30 - 45minutos</p>
+                    <p class="service-duration">Duración: 60 minutos</p>
                     <span class="price">$60.000</span>
                 </div>
             </div>
