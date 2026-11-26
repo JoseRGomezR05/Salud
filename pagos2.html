@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagos | Bienestar Emocional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-pagos">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="payment-section">
+            <div class="section-header">
+                <h2><i class="fas fa-wallet"></i> Métodos de Pago</h2>
+                <p class="section-subtitle">Elige tu método de pago preferido para realizar tus consultas</p>
+            </div>
+
+            <div class="payment-methods">
+                <!-- BANCOLOMBIA -->
+                <div class="payment-card bancolombia">
+                    <div class="card-header">
+                        <div class="bank-icon"><i class="fas fa-building"></i></div>
+                        <h3>Bancolombia</h3>
+                    </div>
+
+                    <div class="payment-details">
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-hashtag"></i> Número de Cuenta:</label>
+                            <div class="detail-value" id="bancolombia-cuenta">487-000054-76</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('bancolombia-cuenta', 'Número de cuenta Bancolombia')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-key"></i> Llave Bancaria:</label>
+                            <div class="detail-value" id="bancolombia-llave">@joseg9688</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('bancolombia-llave', 'Llave Bancolombia')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="qr-container">
+                        <p><i class="fas fa-qrcode"></i> Código QR:</p>
+                        <img src="img/bancolqr.jpg" alt="QR Bancolombia" class="qr-image">
+                    </div>
+                </div>
+
+                <!-- NEQUI -->
+                <div class="payment-card nequi">
+                    <div class="card-header">
+                        <div class="bank-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <h3>Nequi</h3>
+                    </div>
+
+                    <div class="payment-details">
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-phone"></i> Número de Teléfono/Cuenta:</label>
+                            <div class="detail-value" id="nequi-cuenta">3004804521</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('nequi-cuenta', 'Número Nequi')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-key"></i> Llave:</label>
+                            <div class="detail-value" id="nequi-llave">3004804521</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('nequi-llave', 'Llave Nequi')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="qr-container">
+                        <p><i class="fas fa-qrcode"></i> Código QR:</p>
+                        <img src="img/nequiqr.jpg" alt="QR Nequi" class="qr-image">
+                    </div>
+                </div>
+
+                <!-- DAVIVIENDA -->
+                <div class="payment-card davivienda">
+                    <div class="card-header">
+                        <div class="bank-icon"><i class="fas fa-university"></i></div>
+                        <h3>Daviplata</h3>
+                    </div>
+
+                    <div class="payment-details">
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-hashtag"></i> Número de Cuenta:</label>
+                            <div class="detail-value" id="davivienda-cuenta">3004804521</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('davivienda-cuenta', 'Número Daviplata')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+
+                        <div class="detail-item">
+                            <label class="detail-label"><i class="fas fa-key"></i> Llave Bancaria:</label>
+                            <div class="detail-value" id="davivienda-llave">@PLATA3004804521</div>
+                            <button class="copy-btn" onclick="copiarAlPortapapeles('davivienda-llave', 'Llave Daviplata')">
+                                <i class="fas fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="info-box">
+                <h3><i class="fas fa-info-circle"></i> Información Importante</h3>
+                <ul>
+                    <li>Todos los pagos son seguros y cifrados</li>
+                    <li>Después de tu pago, recibirás confirmación vía correo electrónico</li>
+                    <li>Si tienes dudas sobre el pago, contacta al <strong>+57-300-480-4521</strong></li>
+                    <li>Aceptamos pagos en pesos colombianos (COP)</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/main.js"></script>
+</body>
+</html>

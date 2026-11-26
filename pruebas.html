@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienestar Emocional | Pruebas Psicológicas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-pruebas">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="pruebas-section">
+            <h2>Pruebas Psicológicas Disponibles</h2>
+            
+            <div class="pruebas-categorias">
+                <!-- DEPRESIÓN -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😔</span>
+                            Depresión
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="beck.html" class="prueba-item">Depresión de Beck</a>
+                        <span class="prueba-item proximamente">Escala de Depresión GDS <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">PHQ-9 <small>(próximamente)</small></span>
+                    </div>
+                </div>
+
+                <!-- ANSIEDAD -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😰</span>
+                            Ansiedad
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <a href="Ansiedadbeck.html" class="prueba-item">Escala de Ansiedad de Beck</a>
+                        <span class="prueba-item proximamente">GAD-7 <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">STAI (Inventario de Ansiedad Rasgo-Estado) <small>(próximamente)</small></span>
+                    </div>
+                </div>
+
+                <!-- ESTRÉS -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😣</span>
+                            Estrés
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <span class="prueba-item proximamente">Escala de Estrés Percibido (PSS) <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">Escala de Estrés Laboral <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">Test de Burnout de Maslach <small>(próximamente)</small></span>
+                    </div>
+                </div>
+
+                <!-- AUTOESTIMA -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">💪</span>
+                            Autoestima
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <span class="prueba-item proximamente">Escala de Autoestima de Rosenberg <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">Escala de Coopersmith <small>(próximamente)</small></span>
+                    </div>
+                </div>
+
+                <!-- SUEÑO -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😴</span>
+                            Calidad del Sueño
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <span class="prueba-item proximamente">Índice de Calidad del Sueño (PSQI) <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">Escala de Severidad del Insomnio <small>(próximamente)</small></span>
+                    </div>
+                </div>
+
+                <!-- BIENESTAR GENERAL -->
+                <div class="categoria-card">
+                    <div class="categoria-header" onclick="togglePruebas(this)">
+                        <div class="categoria-titulo">
+                            <span class="categoria-icon">😊</span>
+                            Bienestar General
+                        </div>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="pruebas-lista">
+                        <span class="prueba-item proximamente">Escala de Bienestar Psicológico <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">Escala de Satisfacción con la Vida <small>(próximamente)</small></span>
+                        <span class="prueba-item proximamente">WHOQOL (Calidad de Vida) <small>(próximamente)</small></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/main.js"></script>
+</body>
+</html>

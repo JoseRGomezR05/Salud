@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atención Virtual | Bienestar Emocional</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-virtual">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Atención Virtual</h2>
+        <p>Conecta con nuestros profesionales a través de videoconferencia o chat para recibir atención psicológica desde cualquier lugar.</p>
+
+        <div class="virtual-care">
+            <!-- Sección de videollamada -->
+            <div class="video-section">
+                <h3>Consulta por Videollamada</h3>
+                <p>Mantén sesiones cara a cara con tu psicólogo de forma virtual.</p>
+
+                <div class="video-container">
+                    <div class="status-indicator">En línea</div>
+                    <video class="main-video" id="remoteVideo" autoplay></video>
+                    <video class="self-video" id="localVideo" autoplay muted></video>
+                </div>
+
+                <div class="video-controls">
+                    <button class="control-btn" id="muteBtn" title="Silenciar">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="videoBtn" title="Desactivar video">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn end-call" id="endCallBtn" title="Finalizar llamada">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"></path>
+                        </svg>
+                    </button>
+                    <button class="control-btn" id="screenShareBtn" title="Compartir pantalla">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <nav class="nav">
+                    <ul class="nav-links">
+                        <a class="control-btn" href="Agendas.html" style="text-decoration: none;">Agendar Nueva Consulta</a>
+                    </ul>
+                </nav>
+
+            </div>
+
+            <!-- Sección de chat -->
+            <div class="chat-section">
+                <div class="chat-messages">
+                    <div class="message assistant">
+                        Bienvenido/a a la sala de chat de Bienestar Emocional. ¿En qué puedo ayudarte hoy?
+                    </div>
+                    <div class="message user">
+                        Hola, quisiera información sobre las terapias disponibles.
+                    </div>
+                    <div class="message assistant">
+                        Claro, ofrecemos terapia individual, de pareja y familiar. ¿Tienes alguna necesidad específica sobre la que quieras hablar?
+                    </div>
+                </div>
+
+                <div class="chat-input">
+                    <button class="upload-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                        </svg>
+                    </button>
+                    <input type="text" placeholder="Escribe tu mensaje aquí...">
+                    <button class="send-btn">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de asistente IA -->
+        <div class="ai-assistant">
+            <div class="ai-header">
+                <div class="ai-avatar">IA</div>
+                <h3>Asistente Virtual</h3>
+            </div>
+            <p>Nuestro asistente virtual está disponible 24/7 para responder preguntas frecuentes y ayudarte a programar citas.</p>
+
+            <div class="ai-chat">
+                <div class="ai-messages">
+                    <div class="message assistant">
+                        Hola, soy el asistente virtual de Bienestar Emocional. Puedo ayudarte con información sobre nuestros servicios, horarios disponibles o responder preguntas frecuentes sobre salud mental. ¿En qué puedo ayudarte hoy?
+                    </div>
+                </div>
+
+                <div class="ai-input">
+                    <input type="text" placeholder="Hazle una pregunta a nuestro asistente virtual...">
+                    <button class="send-btn">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/main.js"></script>
+</body>
+</html>
