@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Diagnóstico de bienestar laboral para medianas y grandes empresas: burnout, clima laboral, estrés, liderazgo y satisfacción laboral, con informe y plan de intervención.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Organizaciones | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-organizaciones">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="organizaciones.html">Organizaciones</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Portada -->
+        <section class="org-hero">
+            <p class="org-etiqueta">Bienestar Emocional para Organizaciones</p>
+            <h1>Equipos más sanos, organizaciones más productivas</h1>
+            <p class="org-hero-texto">Evaluamos el bienestar psicológico de sus trabajadores con pruebas confiables,
+            le entregamos un informe claro y le acompañamos con un plan de intervención a la medida de su empresa.</p>
+            <div class="org-hero-botones">
+                <a href="#planes" class="org-btn org-btn-principal">Ver planes</a>
+                <a href="#cotizar" class="org-btn org-btn-secundario">Solicitar cotización</a>
+            </div>
+        </section>
+
+        <!-- Beneficios -->
+        <section class="org-seccion">
+            <h2>¿Por qué evaluar el bienestar de su equipo?</h2>
+            <div class="org-beneficios">
+                <div class="org-beneficio">
+                    <span class="org-icono">🔥</span>
+                    <h3>Prevenir el burnout</h3>
+                    <p>Detecte a tiempo el agotamiento y el estrés antes de que se conviertan en incapacidades, ausentismo o renuncias.</p>
+                </div>
+                <div class="org-beneficio">
+                    <span class="org-icono">🤝</span>
+                    <h3>Mejorar el clima laboral</h3>
+                    <p>Conozca cómo se sienten sus trabajadores con la comunicación, el liderazgo y el trabajo en equipo.</p>
+                </div>
+                <div class="org-beneficio">
+                    <span class="org-icono">📊</span>
+                    <h3>Decidir con datos</h3>
+                    <p>Reciba resultados por áreas y prioridades claras para invertir en lo que de verdad necesita su gente.</p>
+                </div>
+                <div class="org-beneficio">
+                    <span class="org-icono">🛡️</span>
+                    <h3>Apoyar su SG-SST</h3>
+                    <p>Fortalezca las acciones de promoción de la salud mental de su Sistema de Gestión de Seguridad y Salud en el Trabajo.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Planes por tamaño de empresa -->
+        <section class="org-seccion" id="planes">
+            <h2>Elija el tamaño de su empresa</h2>
+            <p class="org-subtitulo">Cada plan incluye las pruebas recomendadas para su organización. Puede ajustarlas al solicitar la cotización.</p>
+
+            <div class="org-selector" role="tablist">
+                <button type="button" class="org-tamano activo" data-plan="mediana" role="tab" aria-selected="true">
+                    <span class="org-tamano-icono">🏢</span>
+                    <span class="org-tamano-nombre">Mediana empresa</span>
+                    <span class="org-tamano-detalle">51 a 200 trabajadores</span>
+                </button>
+                <button type="button" class="org-tamano" data-plan="grande" role="tab" aria-selected="false">
+                    <span class="org-tamano-icono">🏙️</span>
+                    <span class="org-tamano-nombre">Gran empresa</span>
+                    <span class="org-tamano-detalle">Más de 200 trabajadores</span>
+                </button>
+            </div>
+
+            <!-- Contenido del plan (se llena desde JS/main.js) -->
+            <div class="org-plan" id="planDetalle" role="tabpanel">
+                <p class="org-plan-descripcion" id="planDescripcion"></p>
+
+                <h3>Pruebas incluidas</h3>
+                <p class="org-plan-tiempo" id="planTiempo"></p>
+                <div class="org-pruebas" id="planPruebas"></div>
+
+                <div id="planOpcionalesBloque">
+                    <h3>Tamizaje opcional de salud mental</h3>
+                    <p class="org-plan-nota">Voluntario y anónimo. Permite estimar cuántos trabajadores podrían necesitar apoyo psicológico.</p>
+                    <div class="org-pruebas" id="planOpcionales"></div>
+                </div>
+
+                <div class="org-plan-columnas">
+                    <div>
+                        <h3>Servicios incluidos</h3>
+                        <ul class="org-lista" id="planServicios"></ul>
+                    </div>
+                    <div>
+                        <h3>Lo que recibe su empresa</h3>
+                        <ul class="org-lista" id="planEntregables"></ul>
+                    </div>
+                </div>
+
+                <a href="#cotizar" class="org-btn org-btn-principal org-btn-plan" id="planCotizar">Cotizar este plan</a>
+            </div>
+        </section>
+
+        <!-- Proceso -->
+        <section class="org-seccion">
+            <h2>¿Cómo trabajamos?</h2>
+            <ol class="org-pasos">
+                <li><strong>Reunión inicial.</strong> Conocemos su empresa, sus áreas y sus necesidades, y ajustamos las pruebas.</li>
+                <li><strong>Aplicación.</strong> Los trabajadores responden de forma anónima, en línea o en papel.</li>
+                <li><strong>Análisis.</strong> Procesamos los resultados por empresa y por área, e identificamos factores de riesgo y fortalezas.</li>
+                <li><strong>Informe y socialización.</strong> Presentamos los resultados a la dirección con recomendaciones concretas.</li>
+                <li><strong>Intervención y seguimiento.</strong> Realizamos talleres y acompañamiento, y medimos de nuevo para ver el avance.</li>
+            </ol>
+        </section>
+
+        <!-- Confidencialidad -->
+        <section class="org-seccion org-confidencial">
+            <h2>🔒 Confidencialidad garantizada</h2>
+            <p>La empresa <strong>nunca recibe resultados individuales</strong>: solo resultados agrupados por empresa y por área,
+            con un mínimo de personas por grupo para que nadie pueda ser identificado. Los datos se tratan según la
+            Ley 1581 de 2012 de protección de datos personales y la Ley 1090 de 2006 (Código Deontológico y Bioético del psicólogo).</p>
+        </section>
+
+        <!-- Cotización -->
+        <section class="org-seccion" id="cotizar">
+            <h2>Solicite su cotización</h2>
+            <p class="org-subtitulo">Complete el formulario y le responderemos lo antes posible.</p>
+
+            <form class="org-formulario" id="formCotizacion" novalidate>
+                <div class="org-campos">
+                    <div class="org-campo">
+                        <label for="orgEmpresa">Nombre de la empresa *</label>
+                        <input type="text" id="orgEmpresa" autocomplete="organization" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgNit">NIT</label>
+                        <input type="text" id="orgNit" inputmode="numeric">
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgSector">Sector o actividad *</label>
+                        <input type="text" id="orgSector" placeholder="Ej.: salud, comercio, manufactura" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgCiudad">Ciudad *</label>
+                        <input type="text" id="orgCiudad" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgTamano">Tamaño de la empresa *</label>
+                        <select id="orgTamano" required>
+                            <option value="mediana">Mediana empresa (51 a 200 trabajadores)</option>
+                            <option value="grande">Gran empresa (más de 200 trabajadores)</option>
+                        </select>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgTrabajadores">Número de trabajadores a evaluar *</label>
+                        <input type="number" id="orgTrabajadores" min="1" inputmode="numeric" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgContacto">Persona de contacto *</label>
+                        <input type="text" id="orgContacto" autocomplete="name" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgCargo">Cargo *</label>
+                        <input type="text" id="orgCargo" placeholder="Ej.: Talento Humano, SST, Gerencia" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgTelefono">Teléfono / WhatsApp *</label>
+                        <input type="tel" id="orgTelefono" autocomplete="tel" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgCorreo">Correo electrónico *</label>
+                        <input type="email" id="orgCorreo" autocomplete="email" required>
+                    </div>
+                    <div class="org-campo">
+                        <label for="orgModalidad">Modalidad preferida</label>
+                        <select id="orgModalidad">
+                            <option>Virtual</option>
+                            <option>Presencial</option>
+                            <option>Mixta (virtual y presencial)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <fieldset class="org-checks">
+                    <legend>Pruebas de interés</legend>
+                    <div id="orgPruebasCheck"></div>
+                </fieldset>
+
+                <div class="org-campo">
+                    <label for="orgComentarios">¿Qué situación le gustaría mejorar en su empresa?</label>
+                    <textarea id="orgComentarios" rows="3" placeholder="Ej.: alta rotación, conflictos entre áreas, mucho estrés en temporada alta..."></textarea>
+                </div>
+
+                <label class="org-consentimiento">
+                    <input type="checkbox" id="orgConsentimiento">
+                    <span>Autorizo el tratamiento de estos datos para recibir la cotización, según la Ley 1581 de 2012.</span>
+                </label>
+
+                <button type="submit" class="org-btn org-btn-principal org-enviar">📱 Enviar solicitud por WhatsApp</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/pruebas-datos.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>

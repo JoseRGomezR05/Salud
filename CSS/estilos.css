@@ -4280,6 +4280,460 @@ body:where(.pg-prueba) {
 
 
 /* ============================================================
+   ORGANIZACIONES (organizaciones.html)
+   ============================================================ */
+
+body.pg-organizaciones > main {
+    padding: 0 0 3rem;
+}
+
+:where(.pg-organizaciones) .org-hero {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 60%, var(--primary-dark) 100%);
+    color: var(--white);
+    text-align: center;
+    padding: 4.5rem 1.25rem 4rem;
+}
+
+:where(.pg-organizaciones) .org-etiqueta {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.14);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    margin: 0 0 1.2rem;
+}
+
+:where(.pg-organizaciones) .org-hero h1 {
+    font-family: 'Merriweather', Georgia, serif;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    line-height: 1.25;
+    max-width: 760px;
+    margin: 0 auto 1rem;
+}
+
+:where(.pg-organizaciones) .org-hero-texto {
+    max-width: 680px;
+    margin: 0 auto 2rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+:where(.pg-organizaciones) .org-hero-botones {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+:where(.pg-organizaciones) .org-btn {
+    display: inline-block;
+    padding: 13px 26px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    font-family: inherit;
+}
+
+:where(.pg-organizaciones) .org-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+:where(.pg-organizaciones) .org-btn-principal {
+    background: var(--accent);
+    color: var(--white);
+}
+
+:where(.pg-organizaciones) .org-btn-secundario {
+    background: transparent;
+    color: var(--white);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+:where(.pg-organizaciones) .org-seccion {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3.5rem 1.25rem 0;
+}
+
+:where(.pg-organizaciones) .org-seccion h2 {
+    font-family: 'Merriweather', Georgia, serif;
+    color: var(--primary);
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    text-align: center;
+    margin: 0 0 0.75rem;
+}
+
+:where(.pg-organizaciones) .org-subtitulo {
+    text-align: center;
+    color: var(--text-muted);
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+/* Beneficios */
+:where(.pg-organizaciones) .org-beneficios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+}
+
+:where(.pg-organizaciones) .org-beneficio {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+:where(.pg-organizaciones) .org-icono {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.6rem;
+}
+
+:where(.pg-organizaciones) .org-beneficio h3 {
+    color: var(--primary);
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem;
+}
+
+:where(.pg-organizaciones) .org-beneficio p {
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Selector de tamaño */
+:where(.pg-organizaciones) .org-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 720px;
+    margin: 0 auto 1.5rem;
+}
+
+:where(.pg-organizaciones) .org-tamano {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 1.4rem 1rem;
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+:where(.pg-organizaciones) .org-tamano:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+:where(.pg-organizaciones) .org-tamano.activo {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: var(--shadow-hover);
+}
+
+:where(.pg-organizaciones) .org-tamano-icono { font-size: 2.2rem; }
+:where(.pg-organizaciones) .org-tamano-nombre { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+:where(.pg-organizaciones) .org-tamano-detalle { font-size: 0.9rem; color: var(--text-muted); }
+
+/* Detalle del plan */
+:where(.pg-organizaciones) .org-plan {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+:where(.pg-organizaciones) .org-plan h3 {
+    color: var(--primary);
+    font-size: 1.15rem;
+    margin: 1.8rem 0 0.4rem;
+}
+
+:where(.pg-organizaciones) .org-plan-descripcion {
+    font-size: 1.02rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0;
+}
+
+:where(.pg-organizaciones) .org-plan-tiempo,
+:where(.pg-organizaciones) .org-plan-nota {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin: 0 0 1rem;
+}
+
+:where(.pg-organizaciones) .org-pruebas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+:where(.pg-organizaciones) .org-prueba {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary-light);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+:where(.pg-organizaciones) .org-prueba-encabezado {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+:where(.pg-organizaciones) .org-prueba h4 {
+    font-size: 0.98rem;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.35;
+}
+
+:where(.pg-organizaciones) .org-prueba p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0.5rem 0 0.8rem;
+    flex: 1;
+}
+
+:where(.pg-organizaciones) .org-tipo {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+:where(.pg-organizaciones) .org-tipo.validada { background: #e3f1fb; color: var(--primary); }
+:where(.pg-organizaciones) .org-tipo.propia { background: var(--accent-soft); color: #1f7a6a; }
+
+:where(.pg-organizaciones) .org-prueba-pie {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+:where(.pg-organizaciones) .org-prueba-pie a {
+    color: var(--primary-light);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+:where(.pg-organizaciones) .org-plan-columnas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0 2rem;
+}
+
+:where(.pg-organizaciones) .org-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+}
+
+:where(.pg-organizaciones) .org-lista li {
+    position: relative;
+    padding: 0.35rem 0 0.35rem 1.7rem;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+:where(.pg-organizaciones) .org-lista li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 0.35rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+:where(.pg-organizaciones) .org-btn-plan {
+    margin-top: 2rem;
+}
+
+/* Proceso */
+:where(.pg-organizaciones) .org-pasos {
+    counter-reset: paso;
+    list-style: none;
+    padding: 0;
+    margin: 2rem auto 0;
+    max-width: 760px;
+}
+
+:where(.pg-organizaciones) .org-pasos li {
+    counter-increment: paso;
+    position: relative;
+    padding: 0 0 1.5rem 3.5rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+
+:where(.pg-organizaciones) .org-pasos li::before {
+    content: counter(paso);
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:where(.pg-organizaciones) .org-pasos strong { color: var(--primary); }
+
+/* Confidencialidad */
+:where(.pg-organizaciones) .org-confidencial p {
+    max-width: 780px;
+    margin: 0 auto;
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 1.2rem 1.4rem;
+    border-radius: 10px;
+    line-height: 1.65;
+}
+
+/* Formulario */
+:where(.pg-organizaciones) .org-formulario {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+:where(.pg-organizaciones) .org-campos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+:where(.pg-organizaciones) .org-campo label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+:where(.pg-organizaciones) .org-campo input,
+:where(.pg-organizaciones) .org-campo select,
+:where(.pg-organizaciones) .org-campo textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    background: var(--white);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+:where(.pg-organizaciones) .org-campo input:focus,
+:where(.pg-organizaciones) .org-campo select:focus,
+:where(.pg-organizaciones) .org-campo textarea:focus {
+    outline: none;
+    border-color: var(--primary-light);
+}
+
+:where(.pg-organizaciones) .org-checks {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 0 0 1.5rem;
+}
+
+:where(.pg-organizaciones) .org-checks legend {
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0 6px;
+    color: var(--primary);
+}
+
+:where(.pg-organizaciones) #orgPruebasCheck {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.5rem 1rem;
+}
+
+:where(.pg-organizaciones) .org-check,
+:where(.pg-organizaciones) .org-consentimiento {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    cursor: pointer;
+}
+
+:where(.pg-organizaciones) .org-check input,
+:where(.pg-organizaciones) .org-consentimiento input {
+    margin-top: 3px;
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+:where(.pg-organizaciones) .org-consentimiento {
+    margin: 1.2rem 0 1.5rem;
+    color: var(--text-muted);
+}
+
+:where(.pg-organizaciones) .org-enviar {
+    width: 100%;
+    background: #25d366;
+    font-size: 16px;
+}
+
+:where(.pg-organizaciones) [hidden] { display: none !important; }
+
+@media (max-width: 600px) {
+    :where(.pg-organizaciones) .org-hero { padding: 3rem 1rem 2.8rem; }
+    :where(.pg-organizaciones) .org-seccion { padding: 2.5rem 1rem 0; }
+    :where(.pg-organizaciones) .org-plan,
+    :where(.pg-organizaciones) .org-formulario { padding: 1.25rem; }
+    :where(.pg-organizaciones) .org-tamano { padding: 1rem 0.5rem; }
+    :where(.pg-organizaciones) .org-tamano-nombre { font-size: 1rem; }
+    :where(.pg-organizaciones) .org-pruebas { grid-template-columns: 1fr; }
+}
+
+
+/* ============================================================
    COMÚN: encabezado, menú y pie de página (todas las páginas)
    ============================================================ */
 
@@ -4384,7 +4838,7 @@ body > main {
     text-decoration: none;
     font-size: 14px !important;
     font-weight: 500 !important;
-    padding: 7px 14px;
+    padding: 7px 12px;
     border-radius: 6px;
     transition: background 0.2s, color 0.2s;
 }
@@ -4463,7 +4917,7 @@ body > main {
 }
 
 /* ── CELULAR ── */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
     .site-header-inner {
         flex-wrap: wrap;
     }

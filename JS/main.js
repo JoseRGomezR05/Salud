@@ -1733,3 +1733,216 @@ if (pagina('dibujo')) (function () {
 
     actualizar();
 })();
+
+
+// ============================================================
+// ORGANIZACIONES: planes por tamaño de empresa y cotización
+// ============================================================
+// Las pruebas se toman de JS/pruebas-datos.js (PRUEBAS).
+if (pagina('organizaciones')) (function () {
+    // Qué mide cada prueba (texto para las empresas)
+    const DESCRIPCIONES = {
+        cbi: 'Agotamiento físico y emocional relacionado con el trabajo.',
+        satisfaccionLaboral: 'Satisfacción con 15 aspectos del trabajo: salario, jefe, compañeros, horario, estabilidad y más.',
+        climaLaboral: 'Respeto, comunicación, justicia, recursos y sentido de pertenencia.',
+        estresLaboral: 'Carga de trabajo, claridad de funciones, control, reconocimiento y presión por plazos.',
+        desgasteLaboral: 'Señales de burnout: agotamiento, distanciamiento y pérdida de sentido del trabajo.',
+        trabajoEquipo: 'Objetivos, roles, confianza, cooperación y manejo de diferencias en el equipo.',
+        liderazgo: 'Cómo perciben los trabajadores a sus jefes directos.',
+        balanceVidaTrabajo: 'Conflicto entre las exigencias del trabajo y la vida personal y familiar.',
+        k10: 'Nivel general de malestar psicológico (nerviosismo, tristeza, desesperanza).',
+        gad7: 'Síntomas de ansiedad en las últimas 2 semanas.',
+        phq9: 'Síntomas depresivos en las últimas 2 semanas.'
+    };
+
+    const PLANES = {
+        mediana: {
+            nombre: 'Mediana empresa',
+            descripcion: 'Un diagnóstico completo y ágil del bienestar laboral, pensado para empresas de 51 a 200 trabajadores. ' +
+                'Identifica los principales factores de riesgo y entrega recomendaciones prácticas para la dirección.',
+            pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'trabajoEquipo'],
+            opcionales: [],
+            servicios: [
+                'Reunión inicial con la gerencia o Talento Humano.',
+                'Aplicación anónima en línea o en papel.',
+                'Análisis de resultados de toda la empresa.',
+                'Un taller grupal (manejo del estrés o comunicación asertiva).',
+                'Socialización de resultados con la dirección.'
+            ],
+            entregables: [
+                'Informe general de bienestar laboral.',
+                'Mapa de los principales factores de riesgo y fortalezas.',
+                'Recomendaciones priorizadas de intervención.'
+            ]
+        },
+        grande: {
+            nombre: 'Gran empresa',
+            descripcion: 'Un programa integral para organizaciones de más de 200 trabajadores, con resultados por área o sede, ' +
+                'plan de intervención y medición de seguimiento para ver el impacto de las acciones.',
+            pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'desgasteLaboral',
+                'trabajoEquipo', 'liderazgo', 'balanceVidaTrabajo'],
+            opcionales: ['k10', 'gad7', 'phq9'],
+            servicios: [
+                'Reuniones de planeación con gerencia, Talento Humano y SST.',
+                'Aplicación anónima en línea o en papel, por áreas o sedes.',
+                'Análisis comparativo entre áreas, sedes y cargos.',
+                'Ciclo de 3 talleres (estrés, liderazgo y trabajo en equipo).',
+                'Espacios de escucha y orientación para trabajadores que lo soliciten.',
+                'Nueva medición a los 6 meses para comparar resultados.'
+            ],
+            entregables: [
+                'Informe general y un informe por cada área o sede.',
+                'Tablero de indicadores de bienestar laboral.',
+                'Plan de intervención con responsables y fechas.',
+                'Informe de seguimiento con la comparación antes y después.'
+            ]
+        }
+    };
+
+    let planActual = 'mediana';
+
+    function minutos(claves) {
+        const preguntas = claves.reduce((suma, k) => suma + PRUEBAS[k].preguntas.length, 0);
+        return { preguntas, minutos: Math.max(1, Math.round(preguntas * 12 / 60)) };
+    }
+
+    function tarjetaPrueba(clave) {
+        const prueba = PRUEBAS[clave];
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'org-prueba';
+        const n = prueba.preguntas.length;
+        tarjeta.innerHTML = `
+            <div class="org-prueba-encabezado">
+                <h4></h4>
+                <span class="org-tipo ${prueba.tipo}">${prueba.tipo === 'validada' ? 'Validada' : 'Orientación'}</span>
+            </div>
+            <p></p>
+            <div class="org-prueba-pie">
+                <span>${n} preguntas · ${Math.max(1, Math.round(n * 12 / 60))} min aprox.</span>
+                <a href="prueba.html?p=${clave}" target="_blank" rel="noopener">Ver la prueba →</a>
+            </div>`;
+        tarjeta.querySelector('h4').textContent = prueba.titulo;
+        tarjeta.querySelector('p').textContent = DESCRIPCIONES[clave] || '';
+        return tarjeta;
+    }
+
+    function llenarLista(id, elementos) {
+        const lista = document.getElementById(id);
+        lista.innerHTML = '';
+        elementos.forEach(texto => {
+            const li = document.createElement('li');
+            li.textContent = texto;
+            lista.appendChild(li);
+        });
+    }
+
+    function mostrarPlan(clave) {
+        planActual = clave;
+        const plan = PLANES[clave];
+
+        document.querySelectorAll('.org-tamano').forEach(boton => {
+            const activo = boton.dataset.plan === clave;
+            boton.classList.toggle('activo', activo);
+            boton.setAttribute('aria-selected', activo);
+        });
+
+        document.getElementById('planDescripcion').textContent = plan.descripcion;
+        const tiempo = minutos(plan.pruebas);
+        document.getElementById('planTiempo').textContent =
+            `${plan.pruebas.length} pruebas · ${tiempo.preguntas} preguntas en total · cada trabajador tarda unos ${tiempo.minutos} minutos.`;
+
+        const contenedor = document.getElementById('planPruebas');
+        contenedor.innerHTML = '';
+        plan.pruebas.forEach(k => contenedor.appendChild(tarjetaPrueba(k)));
+
+        const opcionales = document.getElementById('planOpcionales');
+        opcionales.innerHTML = '';
+        plan.opcionales.forEach(k => opcionales.appendChild(tarjetaPrueba(k)));
+        document.getElementById('planOpcionalesBloque').hidden = plan.opcionales.length === 0;
+
+        llenarLista('planServicios', plan.servicios);
+        llenarLista('planEntregables', plan.entregables);
+        document.getElementById('planCotizar').textContent = `Cotizar plan ${plan.nombre}`;
+    }
+
+    // Casillas de pruebas en el formulario (todas las organizacionales y de tamizaje)
+    const todasLasPruebas = [...new Set([...PLANES.grande.pruebas, ...PLANES.grande.opcionales])];
+    const zonaChecks = document.getElementById('orgPruebasCheck');
+    todasLasPruebas.forEach(clave => {
+        const etiqueta = document.createElement('label');
+        etiqueta.className = 'org-check';
+        etiqueta.innerHTML = `<input type="checkbox" value="${clave}"> <span></span>`;
+        etiqueta.querySelector('span').textContent = PRUEBAS[clave].titulo;
+        zonaChecks.appendChild(etiqueta);
+    });
+
+    // Marcar en el formulario las pruebas del plan elegido
+    function aplicarPlanAlFormulario(clave) {
+        document.getElementById('orgTamano').value = clave;
+        const plan = PLANES[clave];
+        zonaChecks.querySelectorAll('input').forEach(c => { c.checked = plan.pruebas.includes(c.value); });
+    }
+
+    document.querySelectorAll('.org-tamano').forEach(boton => {
+        boton.addEventListener('click', () => {
+            mostrarPlan(boton.dataset.plan);
+            aplicarPlanAlFormulario(boton.dataset.plan);
+        });
+    });
+    document.getElementById('orgTamano').addEventListener('change', e => {
+        mostrarPlan(e.target.value);
+        aplicarPlanAlFormulario(e.target.value);
+    });
+
+    // Enviar la solicitud de cotización por WhatsApp
+    const formulario = document.getElementById('formCotizacion');
+    formulario.addEventListener('submit', e => {
+        e.preventDefault();
+        let primerError = null;
+
+        formulario.querySelectorAll('[required]').forEach(campo => {
+            let mensaje = '';
+            if (!campo.value.trim()) mensaje = 'Este campo es obligatorio.';
+            else if (campo.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(campo.value.trim())) mensaje = 'Escriba un correo válido.';
+            else if (campo.type === 'number' && Number(campo.value) < 1) mensaje = 'Escriba un número mayor que 0.';
+            if (mensaje) { mostrarAviso(campo, mensaje); primerError = primerError || campo; }
+            else quitarAviso(campo);
+        });
+
+        const seleccionadas = [...zonaChecks.querySelectorAll('input:checked')].map(c => PRUEBAS[c.value].titulo);
+        const fieldset = zonaChecks.closest('fieldset');
+        if (!seleccionadas.length) { mostrarAviso(fieldset, 'Seleccione al menos una prueba.'); primerError = primerError || fieldset; }
+        else quitarAviso(fieldset);
+
+        const consentimiento = document.getElementById('orgConsentimiento');
+        const etiquetaConsentimiento = consentimiento.closest('label');
+        if (!consentimiento.checked) { mostrarAviso(etiquetaConsentimiento, 'Debe autorizar el tratamiento de datos.'); primerError = primerError || etiquetaConsentimiento; }
+        else quitarAviso(etiquetaConsentimiento);
+
+        if (primerError) {
+            primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const v = id => document.getElementById(id).value.trim();
+        const texto =
+            `*SOLICITUD DE COTIZACIÓN - ORGANIZACIONES*\n\n` +
+            `*Empresa:* ${v('orgEmpresa')}\n` +
+            (v('orgNit') ? `*NIT:* ${v('orgNit')}\n` : '') +
+            `*Sector:* ${v('orgSector')}\n` +
+            `*Ciudad:* ${v('orgCiudad')}\n` +
+            `*Plan:* ${PLANES[v('orgTamano')].nombre}\n` +
+            `*Trabajadores a evaluar:* ${v('orgTrabajadores')}\n` +
+            `*Modalidad:* ${v('orgModalidad')}\n\n` +
+            `*Contacto:* ${v('orgContacto')} (${v('orgCargo')})\n` +
+            `*Teléfono:* ${v('orgTelefono')}\n` +
+            `*Correo:* ${v('orgCorreo')}\n\n` +
+            `*Pruebas de interés:*\n- ${seleccionadas.join('\n- ')}\n` +
+            (v('orgComentarios') ? `\n*Situación a mejorar:*\n${v('orgComentarios')}` : '');
+
+        window.open(`https://wa.me/573004804521?text=${encodeURIComponent(texto)}`, '_blank');
+    });
+
+    mostrarPlan(planActual);
+    aplicarPlanAlFormulario(planActual);
+})();
