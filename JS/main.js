@@ -1756,6 +1756,24 @@ if (pagina('organizaciones')) (function () {
     };
 
     const PLANES = {
+        pequena: {
+            nombre: 'Pequeña empresa',
+            descripcion: 'Una evaluación corta y económica para empresas de 1 a 50 trabajadores. ' +
+                'Mide lo esencial (agotamiento, clima y estrés) y entrega recomendaciones fáciles de aplicar. ' +
+                'En equipos de menos de 10 personas los resultados se presentan solo de forma general, para proteger el anonimato.',
+            pruebas: ['cbi', 'climaLaboral', 'estresLaboral'],
+            opcionales: [],
+            servicios: [
+                'Reunión inicial virtual con el dueño o gerente.',
+                'Aplicación anónima en línea o en papel.',
+                'Análisis de resultados del equipo.',
+                'Una charla de 1 hora sobre manejo del estrés.'
+            ],
+            entregables: [
+                'Informe resumido de bienestar laboral.',
+                'De 3 a 5 recomendaciones prácticas y de bajo costo.'
+            ]
+        },
         mediana: {
             nombre: 'Mediana empresa',
             descripcion: 'Un diagnóstico completo y ágil del bienestar laboral, pensado para empresas de 51 a 200 trabajadores. ' +
@@ -1799,7 +1817,7 @@ if (pagina('organizaciones')) (function () {
         }
     };
 
-    let planActual = 'mediana';
+    let planActual = 'pequena';
 
     function minutos(claves) {
         const preguntas = claves.reduce((suma, k) => suma + PRUEBAS[k].preguntas.length, 0);

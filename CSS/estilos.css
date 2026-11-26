@@ -4358,6 +4358,7 @@ body.pg-organizaciones > main {
 }
 
 :where(.pg-organizaciones) .org-seccion {
+    scroll-margin-top: 80px;
     max-width: 1100px;
     margin: 0 auto;
     padding: 3.5rem 1.25rem 0;
@@ -4417,9 +4418,9 @@ body.pg-organizaciones > main {
 /* Selector de tamaño */
 :where(.pg-organizaciones) .org-selector {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    max-width: 720px;
+    max-width: 960px;
     margin: 0 auto 1.5rem;
 }
 
@@ -4727,7 +4728,10 @@ body.pg-organizaciones > main {
     :where(.pg-organizaciones) .org-seccion { padding: 2.5rem 1rem 0; }
     :where(.pg-organizaciones) .org-plan,
     :where(.pg-organizaciones) .org-formulario { padding: 1.25rem; }
-    :where(.pg-organizaciones) .org-tamano { padding: 1rem 0.5rem; }
+    :where(.pg-organizaciones) .org-selector { grid-template-columns: 1fr; gap: 0.6rem; }
+    :where(.pg-organizaciones) .org-tamano { padding: 0.9rem 0.75rem; flex-direction: row; gap: 12px; text-align: left; }
+    :where(.pg-organizaciones) .org-tamano-icono { font-size: 1.7rem; }
+    :where(.pg-organizaciones) .org-tamano-detalle { margin-left: auto; }
     :where(.pg-organizaciones) .org-tamano-nombre { font-size: 1rem; }
     :where(.pg-organizaciones) .org-pruebas { grid-template-columns: 1fr; }
 }

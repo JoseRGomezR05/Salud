@@ -78,7 +78,12 @@
             <p class="org-subtitulo">Cada plan incluye las pruebas recomendadas para su organización. Puede ajustarlas al solicitar la cotización.</p>
 
             <div class="org-selector" role="tablist">
-                <button type="button" class="org-tamano activo" data-plan="mediana" role="tab" aria-selected="true">
+                <button type="button" class="org-tamano activo" data-plan="pequena" role="tab" aria-selected="true">
+                    <span class="org-tamano-icono">🏠</span>
+                    <span class="org-tamano-nombre">Pequeña empresa</span>
+                    <span class="org-tamano-detalle">1 a 50 trabajadores</span>
+                </button>
+                <button type="button" class="org-tamano" data-plan="mediana" role="tab" aria-selected="false">
                     <span class="org-tamano-icono">🏢</span>
                     <span class="org-tamano-nombre">Mediana empresa</span>
                     <span class="org-tamano-detalle">51 a 200 trabajadores</span>
@@ -165,6 +170,7 @@
                     <div class="org-campo">
                         <label for="orgTamano">Tamaño de la empresa *</label>
                         <select id="orgTamano" required>
+                            <option value="pequena">Pequeña empresa (1 a 50 trabajadores)</option>
                             <option value="mediana">Mediana empresa (51 a 200 trabajadores)</option>
                             <option value="grande">Gran empresa (más de 200 trabajadores)</option>
                         </select>
