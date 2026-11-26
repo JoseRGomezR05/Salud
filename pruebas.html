@@ -35,8 +35,15 @@
         <section class="pruebas-section">
             <h2>Pruebas Psicológicas Disponibles</h2>
             
+            <div class="aviso-pruebas">
+                Estas pruebas te dan un <strong>bosquejo de tu situación actual</strong>. Son orientativas y
+                <strong>no reemplazan una valoración profesional</strong>.
+                Las marcadas como <strong>Validada</strong> son instrumentos científicos de uso libre;
+                las marcadas como <strong>Orientación</strong> son cuestionarios elaborados por Bienestar Emocional.
+                <br>¿Necesitas ayuda urgente? Línea 192 opción 4 · Línea 106 · Emergencias 123.
+            </div>
+
             <div class="pruebas-categorias">
-                <!-- DEPRESIÓN -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -46,13 +53,11 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <a href="beck.html" class="prueba-item">Depresión de Beck</a>
-                        <span class="prueba-item proximamente">Escala de Depresión GDS <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">PHQ-9 <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=phq9" class="prueba-item">PHQ-9 (Cuestionario de Salud del Paciente) <small class="etiqueta validada">Validada</small></a>
+                        <a href="prueba.html?p=gds15" class="prueba-item">Escala de Depresión Geriátrica GDS-15 (60 años o más) <small class="etiqueta validada">Validada</small></a>
                     </div>
                 </div>
 
-                <!-- ANSIEDAD -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -62,13 +67,11 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <a href="Ansiedadbeck.html" class="prueba-item">Escala de Ansiedad de Beck</a>
-                        <span class="prueba-item proximamente">GAD-7 <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">STAI (Inventario de Ansiedad Rasgo-Estado) <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=gad7" class="prueba-item">GAD-7 (Ansiedad Generalizada) <small class="etiqueta validada">Validada</small></a>
+                        <a href="prueba.html?p=ansiedadCotidiana" class="prueba-item">Ansiedad en la Vida Diaria <small class="etiqueta propia">Orientación</small></a>
                     </div>
                 </div>
 
-                <!-- ESTRÉS -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -78,13 +81,12 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <span class="prueba-item proximamente">Escala de Estrés Percibido (PSS) <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">Escala de Estrés Laboral <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">Test de Burnout de Maslach <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=estresPercibido" class="prueba-item">Estrés Percibido <small class="etiqueta propia">Orientación</small></a>
+                        <a href="prueba.html?p=estresLaboral" class="prueba-item">Estrés Laboral <small class="etiqueta propia">Orientación</small></a>
+                        <a href="prueba.html?p=desgasteLaboral" class="prueba-item">Desgaste Laboral (Burnout) <small class="etiqueta propia">Orientación</small></a>
                     </div>
                 </div>
 
-                <!-- AUTOESTIMA -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -94,12 +96,10 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <span class="prueba-item proximamente">Escala de Autoestima de Rosenberg <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">Escala de Coopersmith <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=rosenberg" class="prueba-item">Escala de Autoestima de Rosenberg <small class="etiqueta validada">Validada</small></a>
                     </div>
                 </div>
 
-                <!-- SUEÑO -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -109,12 +109,11 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <span class="prueba-item proximamente">Índice de Calidad del Sueño (PSQI) <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">Escala de Severidad del Insomnio <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=calidadSueno" class="prueba-item">Calidad del Sueño <small class="etiqueta propia">Orientación</small></a>
+                        <a href="prueba.html?p=insomnio" class="prueba-item">Síntomas de Insomnio <small class="etiqueta propia">Orientación</small></a>
                     </div>
                 </div>
 
-                <!-- BIENESTAR GENERAL -->
                 <div class="categoria-card">
                     <div class="categoria-header" onclick="togglePruebas(this)">
                         <div class="categoria-titulo">
@@ -124,9 +123,9 @@
                         <span class="toggle-icon">▼</span>
                     </div>
                     <div class="pruebas-lista">
-                        <span class="prueba-item proximamente">Escala de Bienestar Psicológico <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">Escala de Satisfacción con la Vida <small>(próximamente)</small></span>
-                        <span class="prueba-item proximamente">WHOQOL (Calidad de Vida) <small>(próximamente)</small></span>
+                        <a href="prueba.html?p=who5" class="prueba-item">Índice de Bienestar de la OMS (WHO-5) <small class="etiqueta validada">Validada</small></a>
+                        <a href="prueba.html?p=satisfaccionVida" class="prueba-item">Escala de Satisfacción con la Vida (SWLS) <small class="etiqueta validada">Validada</small></a>
+                        <a href="prueba.html?p=equilibrioVida" class="prueba-item">Equilibrio Personal <small class="etiqueta propia">Orientación</small></a>
                     </div>
                 </div>
             </div>

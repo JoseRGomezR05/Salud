@@ -22,8 +22,8 @@ function pagina(nombre) {
         }
     });
 
-    // Las pruebas de Beck pertenecen a la sección "Pruebas"
-    if (paginaActual === 'beck.html' || paginaActual === 'Ansiedadbeck.html') {
+    // Cada prueba individual pertenece a la sección "Pruebas"
+    if (paginaActual === 'prueba.html') {
         const pruebas = document.querySelector('.site-nav a[href="pruebas.html"]');
         if (pruebas) pruebas.classList.add('active');
     }
@@ -1230,591 +1230,177 @@ if (pagina('pagos')) (function () {
 
 
 // ============================================================
-// PRUEBAS DE BECK: preguntas
+// PRUEBA PSICOLÓGICA (prueba.html?p=<clave>)
 // ============================================================
-const preguntasDepresion = [
-    {
-        id: 1,
-        text: "Estado de ánimo",
-        options: [
-            { value: 0, text: "No me siento triste" },
-            { value: 1, text: "Me siento triste." },
-            { value: 2, text: "Me siento triste continuamente y no puedo dejar de estarlo." },
-            { value: 3, text: "Me siento tan triste o tan desgraciado que no puedo soportarlo." }
-        ]
-    },
-    {
-        id: 2,
-        text: "Perspectiva del futuro",
-        options: [
-            { value: 0, text: "No me siento especialmente desanimado respecto al futuro." },
-            { value: 1, text: "Me siento desanimado respecto al futuro." },
-            { value: 2, text: "Siento que no tengo que esperar nada." },
-            { value: 3, text: "Siento que el futuro es desesperanzador y las cosas no mejorarán." }
-        ]
-    },
-    {
-        id: 3,
-        text: "Sentimiento de fracaso",
-        options: [
-            { value: 0, text: "No me siento fracasado." },
-            { value: 1, text: "Creo que he fracasado más que la mayoría de las personas." },
-            { value: 2, text: "Cuando miro hacia atrás, sólo veo fracaso tras fracaso." },
-            { value: 3, text: "Me siento una persona totalmente fracasada." }
-        ]
-    },
-    {
-        id: 4,
-        text: "Satisfacción",
-        options: [
-            { value: 0, text: "Las cosas me satisfacen tanto como antes." },
-            { value: 1, text: "No disfruto de las cosas tanto como antes." },
-            { value: 2, text: "Ya no obtengo una satisfacción auténtica de las cosas." },
-            { value: 3, text: "Estoy insatisfecho o aburrido de todo." }
-        ]
-    },
-    {
-        id: 5,
-        text: "Culpa",
-        options: [
-            { value: 0, text: "No me siento especialmente culpable." },
-            { value: 1, text: "Me siento culpable en bastantes ocasiones." },
-            { value: 2, text: "Me siento culpable en la mayoría de las ocasiones." },
-            { value: 3, text: "Me siento culpable constantemente." }
-        ]
-    },
-    {
-        id: 6,
-        text: "Castigo",
-        options: [
-            { value: 0, text: "No creo que esté siendo castigado." },
-            { value: 1, text: "Me siento como si fuese a ser castigado." },
-            { value: 2, text: "Espero ser castigado." },
-            { value: 3, text: "Siento que estoy siendo castigado." }
-        ]
-    },
-    {
-        id: 7,
-        text: "Decepción de sí mismo",
-        options: [
-            { value: 0, text: "No estoy decepcionado de mí mismo." },
-            { value: 1, text: "Estoy decepcionado de mí mismo." },
-            { value: 2, text: "Me da vergüenza de mí mismo." },
-            { value: 3, text: "Me detesto." }
-        ]
-    },
-    {
-        id: 8,
-        text: "Autocrítica",
-        options: [
-            { value: 0, text: "No me considero peor que cualquier otro." },
-            { value: 1, text: "Me autocritico por mis debilidades o por mis errores." },
-            { value: 2, text: "Continuamente me culpo por mis faltas." },
-            { value: 3, text: "Me culpo por todo lo malo que sucede." }
-        ]
-    },
-    {
-        id: 9,
-        text: "Pensamientos suicidas",
-        options: [
-            { value: 0, text: "No tengo ningún pensamiento de suicidio." },
-            { value: 1, text: "A veces pienso en suicidarme, pero no lo cometería." },
-            { value: 2, text: "Desearía suicidarme." },
-            { value: 3, text: "Me suicidaría si tuviese la oportunidad." }
-        ]
-    },
-    {
-        id: 10,
-        text: "Llanto",
-        options: [
-            { value: 0, text: "No lloro más de lo que solía llorar." },
-            { value: 1, text: "Ahora lloro más que antes." },
-            { value: 2, text: "Lloro continuamente." },
-            { value: 3, text: "Antes era capaz de llorar, pero ahora no puedo, incluso aunque quiera." }
-        ]
-    },
-    {
-        id: 11,
-        text: "Irritabilidad",
-        options: [
-            { value: 0, text: "No estoy más irritado de lo normal en mí." },
-            { value: 1, text: "Me molesto o irrito más fácilmente que antes." },
-            { value: 2, text: "Me siento irritado continuamente." },
-            { value: 3, text: "No me irrito absolutamente nada por las cosas que antes solían irritarme." }
-        ]
-    },
-    {
-        id: 12,
-        text: "Interés por los demás",
-        options: [
-            { value: 0, text: "No he perdido el interés por los demás." },
-            { value: 1, text: "Estoy menos interesado en los demás que antes." },
-            { value: 2, text: "He perdido la mayor parte de mi interés por los demás." },
-            { value: 3, text: "He perdido todo el interés por los demás." }
-        ]
-    },
-    {
-        id: 13,
-        text: "Toma de decisiones",
-        options: [
-            { value: 0, text: "Tomo decisiones más o menos como siempre he hecho." },
-            { value: 1, text: "Evito tomar decisiones más que antes." },
-            { value: 2, text: "Tomar decisiones me resulta mucho más difícil que antes." },
-            { value: 3, text: "Ya me es imposible tomar decisiones." }
-        ]
-    },
-    {
-        id: 14,
-        text: "Autoimagen",
-        options: [
-            { value: 0, text: "No creo tener peor aspecto que antes." },
-            { value: 1, text: "Me temo que ahora parezco más viejo o poco atractivo." },
-            { value: 2, text: "Creo que se han producido cambios permanentes en mi aspecto que me hacen parecer poco atractivo." },
-            { value: 3, text: "Creo que tengo un aspecto horrible." }
-        ]
-    },
-    {
-        id: 15,
-        text: "Capacidad de trabajo",
-        options: [
-            { value: 0, text: "Trabajo igual que antes." },
-            { value: 1, text: "Me cuesta un esfuerzo extra comenzar a hacer algo." },
-            { value: 2, text: "Tengo que obligarme mucho para hacer algo." },
-            { value: 3, text: "No puedo hacer nada en absoluto." }
-        ]
-    },
-    {
-        id: 16,
-        text: "Sueño",
-        options: [
-            { value: 0, text: "Duermo tan bien como siempre." },
-            { value: 1, text: "No duermo tan bien como antes." },
-            { value: 2, text: "Me despierto una o dos horas antes de lo habitual y me resulta difícil volver a dormir." },
-            { value: 3, text: "Me despierto varias horas antes de lo habitual y no puedo volverme a dormir." }
-        ]
-    },
-    {
-        id: 17,
-        text: "Fatiga",
-        options: [
-            { value: 0, text: "No me siento más cansado de lo normal." },
-            { value: 1, text: "Me canso más fácilmente que antes." },
-            { value: 2, text: "Me canso en cuanto hago cualquier cosa." },
-            { value: 3, text: "Estoy demasiado cansado para hacer nada." }
-        ]
-    },
-    {
-        id: 18,
-        text: "Apetito",
-        options: [
-            { value: 0, text: "Mi apetito no ha disminuido." },
-            { value: 1, text: "No tengo tan buen apetito como antes." },
-            { value: 2, text: "Ahora tengo mucho menos apetito." },
-            { value: 3, text: "He perdido completamente el apetito." }
-        ]
-    },
-    {
-        id: 19,
-        text: "Pérdida de peso",
-        options: [
-            { value: 0, text: "Últimamente he perdido poco peso o no he perdido nada" },
-            { value: 1, text: "He perdido más de 2 kilos y medio" },
-            { value: 2, text: "He perdido más de 4 kilos" },
-            { value: 3, text: "He perdido más de 7 kilos" }
-        ]
-    },
-    {
-        id: 20,
-        text: "Preocupación somática",
-        options: [
-            { value: 0, text: "No estoy preocupado por mi salud más de lo normal." },
-            { value: 1, text: "Estoy preocupado por problemas físicos como dolores, molestias, malestar de estómago o estreñimiento." },
-            { value: 2, text: "Estoy preocupado por mis problemas físicos y me resulta difícil pensar algo más." },
-            { value: 3, text: "Estoy tan preocupado por mis problemas físicos que soy incapaz de pensar en cualquier cosa." }
-        ]
-    },
-    {
-        id: 21,
-        text: "Interés sexual",
-        options: [
-            { value: 0, text: "No he observado ningún cambio reciente en mi interés." },
-            { value: 1, text: "Estoy menos interesado por el sexo que antes." },
-            { value: 2, text: "Estoy mucho menos interesado por el sexo." },
-            { value: 3, text: "He perdido totalmente mi interés por el sexo." }
-        ]
+// Las preguntas de cada prueba están en JS/pruebas-datos.js.
+if (pagina('prueba')) (function () {
+    const clave = new URLSearchParams(location.search).get('p');
+    const prueba = (typeof PRUEBAS !== 'undefined' && Object.prototype.hasOwnProperty.call(PRUEBAS, clave))
+        ? PRUEBAS[clave] : null;
+
+    if (!prueba) {
+        document.getElementById('pruebaTitulo').textContent = 'Prueba no encontrada';
+        document.getElementById('pruebaInstrucciones').innerHTML =
+            'La prueba que buscas no existe. <a href="pruebas.html">Ver todas las pruebas</a>.';
+        document.querySelectorAll('.aviso-prueba, .patient-info-section, .progress-section, .result-section')
+            .forEach(el => el.hidden = true);
+        return;
     }
-];
 
-const preguntasAnsiedad = [
-    {
-        id: 1,
-        text: "Torpe o entumecido",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 2,
-        text: "Acalorad@",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 3,
-        text: "Con tembor en las piernas",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 4,
-        text: "Incapaz de relajarse",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 5,
-        text: "Con temor a que ocurra lo peor",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 6,
-        text: "Maread@, o que se le va la cabeza",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 7,
-        text: "Con latidos del corazón fuertes y acelerados",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 8,
-        text: "Inestable",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 9,
-        text: "Atemorizad@ o asustad@",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 10,
-        text: "Nervioso",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 11,
-        text: "Con sensación de bloqueo",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 12,
-        text: "Con temblores en las manos",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 13,
-        text: "Inquieto, inseguro",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 14,
-        text: "Con miedo a perder el control",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 15,
-        text: "Con sensación de ahogo",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 16,
-        text: "Con temor a morir",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 17,
-        text: "Con miedo",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 18,
-        text: "Con problemas digestivos",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 19,
-        text: "Con desvanecimientos",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 20,
-        text: "Con rubor facial",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
-    },
-    {
-        id: 21,
-        text: "Con sudores, fríos o calientes",
-        options: [
-            { value: 0, text: "No, en absoluto" },
-            { value: 1, text: "Levemente" },
-            { value: 2, text: "Moderadamente" },
-            { value: 3, text: "Bastante" }
-        ]
+    const preguntas = prueba.preguntas;
+    const respuestas = {};   // índice de pregunta → índice de opción elegida
+    const sufijo = prueba.maximoMostrado === 100 ? '%' : '';
+
+    // Encabezado de la página
+    document.title = `${prueba.titulo} | Bienestar Emocional`;
+    document.getElementById('pruebaCategoria').textContent =
+        prueba.categoria + (prueba.tipo === 'validada' ? ' · Prueba validada' : ' · Cuestionario de orientación');
+    document.getElementById('pruebaTitulo').textContent = prueba.titulo;
+    document.getElementById('pruebaInstrucciones').textContent = prueba.instrucciones;
+    document.getElementById('totalPreguntas').textContent = preguntas.length;
+    document.getElementById('avisoPropia').hidden = prueba.tipo !== 'propia';
+    document.getElementById('pruebaFuente').textContent = prueba.tipo === 'validada'
+        ? 'Fuente: ' + prueba.fuente
+        : 'Cuestionario de orientación elaborado por Bienestar Emocional. No es un instrumento validado científicamente.';
+
+    function opcionesDe(pregunta) {
+        return pregunta.opciones || prueba.opciones;
     }
-];
 
-// ============================================================
-// PRUEBAS DE BECK: funcionamiento (depresión y ansiedad)
-// ============================================================
-// Motor común de los inventarios de Beck (depresión y ansiedad).
-// Cada página indica qué prueba es con <body data-test="depresion"> o "ansiedad".
-function iniciarTestBeck(config) {
-    const questions = config.preguntas;
-    let responses = {};
+    // Puntaje de una respuesta (las preguntas invertidas se puntúan al revés)
+    function puntajeDe(i) {
+        const opciones = opcionesDe(preguntas[i]);
+        const valor = opciones[respuestas[i]].valor;
+        if (!preguntas[i].invertida) return valor;
+        const valores = opciones.map(o => o.valor);
+        return Math.max(...valores) + Math.min(...valores) - valor;
+    }
 
-    // Renderizar preguntas
-    function renderQuestions() {
-        const container = document.getElementById('questionsContainer');
-        container.innerHTML = '';
+    function calcularTotal() {
+        let total = 0;
+        Object.keys(respuestas).forEach(i => { total += puntajeDe(Number(i)); });
+        return prueba.puntuar ? prueba.puntuar(total) : total;
+    }
 
-        questions.forEach(question => {
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'question-item';
+    function interpretar(total) {
+        const rango = prueba.rangos.find(r => total <= r.hasta) || prueba.rangos[prueba.rangos.length - 1];
+        return rango.texto;
+    }
 
-            const titleH3 = document.createElement('h3');
-            titleH3.textContent = `${question.id}. ${question.text}`;
+    function necesitaAyuda(total) {
+        return prueba.umbralMenor ? total <= prueba.umbral : total >= prueba.umbral;
+    }
 
-            const optionsDiv = document.createElement('div');
-            optionsDiv.className = 'options';
+    function hayRiesgo() {
+        const alerta = prueba.alertaCrisis;
+        if (!alerta || respuestas[alerta.pregunta] === undefined) return false;
+        return puntajeDe(alerta.pregunta) >= alerta.desde;
+    }
 
-            question.options.forEach(option => {
-                const button = document.createElement('button');
-                button.className = 'option-button';
-                if (responses[question.id] === option.value) {
-                    button.classList.add('selected');
-                }
+    // Dibujar las preguntas
+    function dibujarPreguntas() {
+        const contenedor = document.getElementById('questionsContainer');
+        contenedor.innerHTML = '';
 
-                button.innerHTML = `
-                    <div class="checkbox">
-                        ${responses[question.id] === option.value ? '<div class="checkmark"></div>' : ''}
-                    </div>
-                    <span class="option-text">${option.text}</span>
-                `;
+        preguntas.forEach((pregunta, i) => {
+            const bloque = document.createElement('div');
+            bloque.className = 'question-item';
 
-                button.addEventListener('click', () => {
-                    responses[question.id] = option.value;
-                    renderQuestions();
-                    updateUI();
+            const titulo = document.createElement('h3');
+            titulo.textContent = `${i + 1}. ${pregunta.texto}`;
+
+            const opcionesDiv = document.createElement('div');
+            opcionesDiv.className = 'options';
+            opcionesDiv.setAttribute('role', 'radiogroup');
+
+            opcionesDe(pregunta).forEach((opcion, j) => {
+                const elegida = respuestas[i] === j;
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.className = 'option-button' + (elegida ? ' selected' : '');
+                boton.setAttribute('role', 'radio');
+                boton.setAttribute('aria-checked', elegida);
+                boton.innerHTML = `
+                    <div class="checkbox">${elegida ? '<div class="checkmark"></div>' : ''}</div>
+                    <span class="option-text"></span>`;
+                boton.querySelector('.option-text').textContent = opcion.texto;
+
+                boton.addEventListener('click', () => {
+                    respuestas[i] = j;
+                    dibujarPreguntas();
+                    actualizar();
                 });
-
-                optionsDiv.appendChild(button);
+                opcionesDiv.appendChild(boton);
             });
 
-            questionDiv.appendChild(titleH3);
-            questionDiv.appendChild(optionsDiv);
-            container.appendChild(questionDiv);
+            bloque.appendChild(titulo);
+            bloque.appendChild(opcionesDiv);
+            contenedor.appendChild(bloque);
         });
     }
 
-    // Calcular puntuación total
-    function calculateTotal() {
-        return Object.values(responses).reduce((sum, val) => sum + (val || 0), 0);
-    }
+    // Actualizar progreso, resultado y botón de envío
+    function actualizar() {
+        const respondidas = Object.keys(respuestas).length;
+        const completa = respondidas === preguntas.length;
 
-    // Actualizar UI
-    function updateUI() {
-        const totalAnswered = Object.keys(responses).length;
-        const totalQuestions = questions.length;
-        const allAnswered = totalAnswered === totalQuestions;
+        document.getElementById('answered').textContent = respondidas;
+        document.getElementById('progressFill').style.width = (respondidas / preguntas.length * 100) + '%';
 
-        // Actualizar progreso
-        document.getElementById('answered').textContent = totalAnswered;
-        const percentage = (totalAnswered / totalQuestions) * 100;
-        document.getElementById('progressFill').style.width = percentage + '%';
+        const total = calcularTotal();
+        document.getElementById('totalScore').textContent = completa ? total + sufijo : '–';
+        document.getElementById('interpretation').textContent =
+            completa ? interpretar(total) : 'Completa todas las preguntas para ver tu resultado';
+        document.getElementById('warningText').hidden = !(completa && necesitaAyuda(total));
+        document.getElementById('alertaCrisis').hidden = !hayRiesgo();
 
-        // Actualizar puntuación
-        const total = calculateTotal();
-        document.getElementById('totalScore').textContent = total;
-        document.getElementById('interpretation').textContent = config.interpretar(total);
-
-        // Mostrar advertencia si es necesario
-        document.getElementById('warningText').style.display = total >= config.umbral ? 'block' : 'none';
-
-        // Validar campos de información
         const nombre = document.getElementById('nombre').value.trim();
         const identificacion = document.getElementById('identificacion').value.trim();
-        const sendBtn = document.getElementById('sendBtn');
-        const sendMessage = document.getElementById('sendMessage');
+        const acepta = document.getElementById('consentimiento').checked;
+        const boton = document.getElementById('sendBtn');
+        const mensaje = document.getElementById('sendMessage');
 
-        if (allAnswered && nombre && identificacion) {
-            sendBtn.disabled = false;
-            sendMessage.textContent = '✓ Listo para enviar';
-            sendMessage.style.color = '#25d366';
+        if (completa && nombre && identificacion && acepta) {
+            boton.disabled = false;
+            mensaje.textContent = '✓ Listo para enviar';
+            mensaje.style.color = '#25d366';
         } else {
-            sendBtn.disabled = true;
-            if (!nombre || !identificacion) {
-                sendMessage.textContent = 'Completa tu nombre e identificación';
-            } else {
-                sendMessage.textContent = 'Completa todas las preguntas';
-            }
-            sendMessage.style.color = '#999';
+            boton.disabled = true;
+            mensaje.style.color = '#999';
+            if (!completa) mensaje.textContent = 'Completa todas las preguntas';
+            else if (!nombre || !identificacion) mensaje.textContent = 'Completa tu nombre e identificación';
+            else mensaje.textContent = 'Marca la autorización de tratamiento de datos';
         }
     }
 
-    // Enviar por WhatsApp
-    function sendWhatsApp() {
+    // Enviar resultado por WhatsApp
+    function enviarWhatsApp() {
         const nombre = document.getElementById('nombre').value.trim();
         const identificacion = document.getElementById('identificacion').value.trim();
-        const total = calculateTotal();
+        const total = calcularTotal();
 
-        // Construir detalles de respuestas
-        let detalles = '';
-        questions.forEach(question => {
-            const respuesta = responses[question.id];
-            if (respuesta !== undefined) {
-                detalles += `\nPregunta ${question.id}: ${respuesta} puntos`;
-            }
+        let detalle = '';
+        preguntas.forEach((pregunta, i) => {
+            detalle += `\n${i + 1}. ${opcionesDe(pregunta)[respuestas[i]].texto} (${puntajeDe(i)})`;
         });
 
-        const mensaje = encodeURIComponent(
-            `*RESULTADO ${config.titulo}*\n\n` +
-            `*Datos del Paciente:*\nNombre: ${nombre}\nIdentificación: ${identificacion}\n\n` +
-            `*Puntuación Total: ${total}*\n\n` +
-            `*Interpretación:*\n${config.interpretar(total)}${detalles}`
-        );
+        const texto =
+            `*RESULTADO: ${prueba.titulo.toUpperCase()}*\n\n` +
+            `*Datos del paciente:*\nNombre: ${nombre}\nIdentificación: ${identificacion}\n\n` +
+            `*Puntuación total: ${total}${sufijo}*\n` +
+            `*Interpretación:* ${interpretar(total)}\n` +
+            (hayRiesgo() ? '\n⚠️ *ATENCIÓN: el paciente marcó pensamientos de hacerse daño.*\n' : '') +
+            `\n*Respuestas:*${detalle}`;
 
-        window.open(`https://wa.me/573004804521?text=${mensaje}`, '_blank');
+        window.open(`https://wa.me/573004804521?text=${encodeURIComponent(texto)}`, '_blank');
     }
 
     ['nombre', 'identificacion'].forEach(id => {
-        document.getElementById(id).addEventListener('change', updateUI);
-        document.getElementById(id).addEventListener('keyup', updateUI);
+        document.getElementById(id).addEventListener('input', actualizar);
     });
-    document.getElementById('sendBtn').addEventListener('click', sendWhatsApp);
+    document.getElementById('consentimiento').addEventListener('change', actualizar);
+    document.getElementById('sendBtn').addEventListener('click', enviarWhatsApp);
 
-    renderQuestions();
-}
-
-if (pagina('beck')) {
-    if (document.body.dataset.test === 'ansiedad') {
-        iniciarTestBeck({
-            titulo: 'INVENTARIO DE ANSIEDAD DE BECK',
-            preguntas: preguntasAnsiedad,
-            umbral: 22,
-            interpretar(total) {
-                if (total <= 21) return 'Estos altibajos son considerados normales.';
-                if (total <= 35) return 'Ansiedad moderada.';
-                return 'Ansiedad severa.';
-            }
-        });
-    } else {
-        iniciarTestBeck({
-            titulo: 'INVENTARIO DE DEPRESIÓN DE BECK',
-            preguntas: preguntasDepresion,
-            umbral: 17,
-            interpretar(total) {
-                if (total <= 10) return 'Estos altibajos son considerados normales.';
-                if (total <= 16) return 'Leve perturbación del estado de ánimo.';
-                if (total <= 20) return 'Estados de depresión intermitentes.';
-                if (total <= 30) return 'Depresión moderada.';
-                if (total <= 40) return 'Depresión grave.';
-                return 'Depresión extrema.';
-            }
-        });
-    }
-}
+    dibujarPreguntas();
+    actualizar();
+})();

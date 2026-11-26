@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Cuestionario de orientación sobre síntomas de ansiedad. El resultado es orientativo y no reemplaza una valoración profesional.">
+    <meta name="description" content="Pruebas psicológicas de orientación en línea: depresión, ansiedad, estrés, autoestima, sueño y bienestar. El resultado no reemplaza una valoración profesional.">
     <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
-    <title>Inventario de Ansiedad de Beck (BAI)</title>
+    <title>Prueba Psicológica | Bienestar Emocional</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="CSS/estilos.css">
 </head>
-<body class="pg pg-beck" data-test="ansiedad">
+<body class="pg pg-prueba">
     <header class="site-header">
         <div class="site-header-inner">
             <a href="index.html" class="site-brand">
@@ -33,25 +33,36 @@
 
     <div class="container">
         <div class="card">
-            <h1>Inventario de Ansiedad de Beck (BAI)</h1>
-            <p class="subtitle">Por favor, completa tu información y selecciona la opción que mejor describes cómo te has sentido esta última semana.</p>
+            <a href="pruebas.html" class="volver">&larr; Volver a las pruebas</a>
+            <p class="prueba-categoria" id="pruebaCategoria"></p>
+            <h1 id="pruebaTitulo">Cargando prueba...</h1>
+            <p class="subtitle" id="pruebaInstrucciones"></p>
+
+            <!-- Aviso importante (siempre visible) -->
+            <div class="aviso-prueba">
+                <strong>Antes de empezar:</strong> esta prueba es <strong>orientativa</strong> y
+                <strong>no es un diagnóstico</strong>. Sirve para darte una idea de tu situación actual.
+                Solo un profesional de la salud mental puede hacer una valoración completa.
+                <span id="avisoPropia" hidden><br><br>Este cuestionario fue elaborado por Bienestar Emocional
+                como herramienta de orientación y <strong>no es una prueba validada científicamente</strong>.</span>
+            </div>
 
             <!-- Sección de datos del paciente -->
             <div class="patient-info-section">
                 <h3>Información del Paciente</h3>
                 <div class="form-group">
                     <label for="nombre">Nombre Completo:</label>
-                    <input type="text" id="nombre" placeholder="Ingresa tu nombre completo" required>
+                    <input type="text" id="nombre" placeholder="Ingresa tu nombre completo" autocomplete="name" required>
                 </div>
                 <div class="form-group">
                     <label for="identificacion">Número de Identificación:</label>
-                    <input type="text" id="identificacion" placeholder="Ingresa tu número de cédula o identificación" required>
+                    <input type="text" id="identificacion" placeholder="Ingresa tu número de cédula o identificación" inputmode="numeric" required>
                 </div>
             </div>
 
             <!-- Barra de progreso -->
             <div class="progress-section">
-                <p class="progress-text">Progreso: <span id="answered">0</span> de 21 preguntas respondidas</p>
+                <p class="progress-text">Progreso: <span id="answered">0</span> de <span id="totalPreguntas">0</span> preguntas respondidas</p>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
@@ -60,19 +71,46 @@
             <!-- Contenedor de preguntas -->
             <div id="questionsContainer" class="questions-container"></div>
 
+            <!-- Alerta de crisis (se muestra si hay respuestas de riesgo) -->
+            <div class="alerta-crisis" id="alertaCrisis" role="alert" hidden>
+                <h3>No estás solo(a). Pide ayuda ahora.</h3>
+                <p>Marcaste que has tenido pensamientos de hacerte daño. Hablar con alguien puede ayudar mucho,
+                y puedes hacerlo hoy mismo, de forma gratuita y confidencial:</p>
+                <ul>
+                    <li><strong>Línea 192, opción 4</strong>: atención en salud mental (todo el país)</li>
+                    <li><strong>Línea 106</strong>: apoyo emocional (Bogotá y otras ciudades)</li>
+                    <li><strong>Línea 123</strong>: emergencias, si estás en peligro inmediato</li>
+                </ul>
+                <p>También puedes escribirnos por <a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a>.</p>
+            </div>
+
             <!-- Resultado -->
             <div class="result-section">
                 <div class="result-card">
                     <p class="result-label">Puntuación Total:</p>
                     <p class="result-score" id="totalScore">0</p>
                     <p class="result-interpretation" id="interpretation">Completa todas las preguntas</p>
-                    <p class="result-warning" id="warningText" style="display: none;">⚠️ Una puntuación de 22 o más indica que puede necesitar ayuda profesional.</p>
+                    <p class="result-warning" id="warningText" hidden>⚠️ Tu resultado sugiere que sería bueno hablar con un profesional. <a href="Agendas.html">Agenda una cita</a>.</p>
                 </div>
 
+                <label class="consentimiento">
+                    <input type="checkbox" id="consentimiento">
+                    <span>Autorizo a Bienestar Emocional a recibir y tratar mis datos y respuestas de forma
+                    confidencial, solo para fines de orientación y atención psicológica, según la
+                    Ley 1581 de 2012 de protección de datos personales.</span>
+                </label>
+
                 <button id="sendBtn" class="send-button" disabled>
-                    📱 Enviar por WhatsApp
+                    📱 Enviar resultado por WhatsApp
                 </button>
                 <p id="sendMessage" class="send-message">Completa todas las preguntas y tu información para enviar</p>
+            </div>
+
+            <p class="fuente-prueba" id="pruebaFuente"></p>
+
+            <!-- Líneas de ayuda (siempre visibles) -->
+            <div class="lineas-ayuda">
+                <strong>¿Necesitas ayuda urgente?</strong> Línea 192 opción 4 · Línea 106 · Emergencias 123
             </div>
         </div>
     </div>
@@ -97,6 +135,7 @@
         </div>
         <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
     </footer>
+    <script src="JS/pruebas-datos.js"></script>
     <script src="JS/main.js"></script>
 </body>
 </html>
