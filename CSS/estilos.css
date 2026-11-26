@@ -1678,32 +1678,60 @@ body:where(.pg-inicio), :where(.pg-inicio) ul, :where(.pg-inicio) li, :where(.pg
     background-size: 20px;
 }
 
-/* Estilos para el botón flotante de WhatsApp */
-:where(.pg-inicio) .whatsapp-float {
+/* Botón flotante de WhatsApp (todas las páginas) */
+.whatsapp-float {
     position: fixed;
     bottom: 20px;
     right: 20px;
     background-color: #25D366;
-    color: white;
+    color: #fff;
     border-radius: 50px;
     padding: 10px 20px;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
     text-decoration: none;
     box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
-    z-index: 1000;
-    transition: all 0.3s ease;
+    z-index: 999;
+    transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
-:where(.pg-inicio) .whatsapp-float:hover {
-    transform: scale(1.1);
+.whatsapp-float:hover {
+    transform: scale(1.08);
     background-color: #128C7E;
+    color: #fff;
 }
 
-:where(.pg-inicio) .whatsapp-icon {
+.whatsapp-icon {
     width: 24px;
     height: 24px;
+    flex-shrink: 0;
+}
+
+/* En celular solo se ve el ícono para no tapar el contenido */
+@media (max-width: 600px) {
+    .whatsapp-float { padding: 12px; bottom: 16px; right: 16px; }
+    .whatsapp-float .whatsapp-text { display: none; }
+}
+
+/* Mensajes de error dentro de los formularios (reemplazan los alert) */
+.aviso-campo {
+    display: block;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #fdecea;
+    color: #b3261e;
+    border-left: 4px solid #b3261e;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.campo-error {
+    border-color: #b3261e !important;
+    outline-color: #b3261e;
 }
 
 

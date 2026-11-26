@@ -46,6 +46,43 @@ document.querySelectorAll('.site-year').forEach(el => {
     el.textContent = new Date().getFullYear();
 });
 
+// Botón flotante de WhatsApp en todas las páginas
+(function () {
+    if (document.querySelector('.whatsapp-float')) return;
+    const enlace = document.createElement('a');
+    enlace.href = 'https://wa.me/573004804521';
+    enlace.className = 'whatsapp-float';
+    enlace.target = '_blank';
+    enlace.rel = 'noopener';
+    enlace.setAttribute('aria-label', 'Contactar por WhatsApp');
+    enlace.innerHTML =
+        '<svg class="whatsapp-icon" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>' +
+        '<span class="whatsapp-text">Contactar por WhatsApp</span>';
+    document.body.appendChild(enlace);
+})();
+
+// Muestra un mensaje de error debajo de un campo (en lugar de alert)
+function mostrarAviso(campo, mensaje) {
+    if (!campo) return;
+    quitarAviso(campo);
+    const aviso = document.createElement('span');
+    aviso.className = 'aviso-campo';
+    aviso.setAttribute('role', 'alert');
+    aviso.textContent = mensaje;
+    campo.classList.add('campo-error');
+    campo.insertAdjacentElement('afterend', aviso);
+    campo._aviso = aviso;
+}
+
+function quitarAviso(campo) {
+    if (!campo) return;
+    campo.classList.remove('campo-error');
+    if (campo._aviso) {
+        campo._aviso.remove();
+        campo._aviso = null;
+    }
+}
+
 // ============================================================
 // PERFIL PROFESIONAL: tarjetas desplegables
 // ============================================================
@@ -132,7 +169,7 @@ if (pagina('agendas')) (function () {
 
             // Verificar si la fecha es válida
             if (isNaN(selectedDate.getTime())) {
-                alert('Por favor introduce una fecha válida.');
+                mostrarAviso(e.target, 'Por favor introduce una fecha válida.');
                 e.target.value = '';
                 return false;
             }
@@ -141,7 +178,7 @@ if (pagina('agendas')) (function () {
 
             // Si es domingo (0) no se atiende
             if (dayOfWeek === 0) {
-                alert('Lo sentimos, no hay atención los domingos. Por favor seleccione otro día.');
+                mostrarAviso(e.target, 'Lo sentimos, no hay atención los domingos. Por favor selecciona otro día.');
                 e.target.value = '';
                 return false;
             }
@@ -154,11 +191,12 @@ if (pagina('agendas')) (function () {
             const selectedDateNoTime = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
 
             if (selectedDateNoTime < todayNoTime) {
-                alert('No se pueden seleccionar fechas pasadas.');
+                mostrarAviso(e.target, 'No se pueden seleccionar fechas pasadas.');
                 e.target.value = '';
                 return false;
             }
 
+            quitarAviso(e.target);
             return true;
         } catch (error) {
             console.error('Error al validar la fecha:', error);
@@ -174,6 +212,7 @@ if (pagina('agendas')) (function () {
             professionalCards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedProfessional = card.querySelector('h3').textContent;
+            quitarAviso(submitButton);
             selectedProfessionalPhone = card.dataset.phone;
             updateSubmitButtonState();
             updateServicesSummary();
@@ -338,7 +377,7 @@ if (pagina('agendas')) (function () {
 
         // Validar que se haya seleccionado un profesional
         if (!selectedProfessional || !selectedProfessionalPhone) {
-            alert('Por favor selecciona un profesional antes de continuar.');
+            mostrarAviso(submitButton, 'Por favor selecciona un profesional antes de continuar.');
             return;
         }
 
