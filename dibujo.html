@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pruebas proyectivas de dibujo en línea: figura humana y dibujo de la familia. El dibujo es interpretado por un profesional.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Prueba de Dibujo | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-prueba pg-dibujo">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <a href="pruebas.html" class="volver">&larr; Volver a las pruebas</a>
+            <p class="prueba-categoria" id="dibujoCategoria"></p>
+            <h1 id="dibujoTitulo">Cargando prueba...</h1>
+            <p class="subtitle" id="dibujoIntro"></p>
+
+            <div class="aviso-prueba">
+                <strong>Importante:</strong> esta prueba <strong>no da un resultado automático</strong>.
+                Tu dibujo y tus respuestas se envían al profesional, que es quien los analiza y te explica
+                los resultados en consulta.
+            </div>
+
+            <!-- Datos del paciente -->
+            <div class="patient-info-section">
+                <h3>Información del Paciente</h3>
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo:</label>
+                    <input type="text" id="nombre" placeholder="Ingresa tu nombre completo" autocomplete="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="identificacion">Número de Identificación:</label>
+                    <input type="text" id="identificacion" placeholder="Ingresa tu número de cédula o identificación" inputmode="numeric" required>
+                </div>
+                <div class="form-group">
+                    <label for="edad">Edad:</label>
+                    <input type="number" id="edad" min="3" max="110" placeholder="Edad en años" inputmode="numeric" required>
+                </div>
+                <div class="form-group" id="grupoAcudiente" hidden>
+                    <label for="acudiente">Nombre del padre, madre o acudiente:</label>
+                    <input type="text" id="acudiente" placeholder="Obligatorio para menores de 18 años">
+                </div>
+            </div>
+
+            <!-- Materiales -->
+            <div class="materiales">
+                <h3>Antes de empezar, ten a mano:</h3>
+                <ul id="listaMateriales"></ul>
+                <p class="nota-materiales">Te recomendamos <strong>dibujar en papel y subir una foto</strong>.
+                Si no tienes papel, puedes dibujar en la pantalla con el dedo o el mouse.</p>
+            </div>
+
+            <!-- Dibujos (se generan desde JS/main.js) -->
+            <div id="contenedorDibujos"></div>
+
+            <!-- Preguntas después de dibujar -->
+            <div class="preguntas-dibujo">
+                <h3>Cuando termines de dibujar, responde estas preguntas</h3>
+                <p class="subtitle">Escribe lo primero que se te ocurra. Puedes dejar en blanco las que no quieras responder.</p>
+                <div id="contenedorPreguntas"></div>
+            </div>
+
+            <div class="result-section">
+                <label class="consentimiento">
+                    <input type="checkbox" id="consentimiento">
+                    <span>Autorizo a Bienestar Emocional a recibir y tratar mis datos, dibujos y respuestas de forma
+                    confidencial, solo para fines de evaluación y atención psicológica, según la
+                    Ley 1581 de 2012. Si el paciente es menor de edad, esta autorización la da su padre, madre o acudiente.</span>
+                </label>
+
+                <button id="sendBtn" class="send-button" disabled>📱 Enviar dibujo por WhatsApp</button>
+                <p id="sendMessage" class="send-message">Completa tus datos y los dibujos para enviar</p>
+                <p class="nota-envio" id="notaEnvio" hidden></p>
+            </div>
+
+            <p class="fuente-prueba" id="dibujoReferencia"></p>
+
+            <div class="lineas-ayuda">
+                <strong>¿Necesitas ayuda urgente?</strong> Línea 192 opción 4 · Línea 106 · Emergencias 123
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/pruebas-datos.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>

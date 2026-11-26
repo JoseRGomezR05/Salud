@@ -4121,6 +4121,7 @@ body:where(.pg-prueba) {
 
 :where(.pg-pruebas) .etiqueta.validada { background: #e3f1fb; color: #1a4a6b; }
 :where(.pg-pruebas) .etiqueta.propia { background: #e8f7f5; color: #1f7a6a; }
+:where(.pg-pruebas) .etiqueta.proyectiva { background: #f3ecfb; color: #5b3a8a; }
 
 :where(.pg-pruebas) .aviso-pruebas {
     max-width: 900px;
@@ -4131,6 +4132,126 @@ body:where(.pg-prueba) {
     border-radius: 8px;
     line-height: 1.6;
     color: #2c3e50;
+}
+
+
+/* Pruebas proyectivas de dibujo (dibujo.html) */
+:where(.pg-dibujo) .materiales,
+:where(.pg-dibujo) .bloque-dibujo,
+:where(.pg-dibujo) .preguntas-dibujo {
+    background: #f8f9fa;
+    border-left: 4px solid #2a6496;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+:where(.pg-dibujo) .materiales h3,
+:where(.pg-dibujo) .bloque-dibujo h3,
+:where(.pg-dibujo) .preguntas-dibujo h3 {
+    color: #1a4a6b;
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+:where(.pg-dibujo) .materiales ul { margin: 0 0 12px 20px; line-height: 1.7; color: #333; font-size: 14px; }
+:where(.pg-dibujo) .nota-materiales { font-size: 13px; color: #555; line-height: 1.5; }
+
+:where(.pg-dibujo) .consigna {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e2b3a;
+    background: #fff;
+    border: 1px dashed #2a6496;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+:where(.pg-dibujo) .modo-dibujo { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+
+:where(.pg-dibujo) .modo-btn,
+:where(.pg-dibujo) .herr {
+    flex: 1 1 auto;
+    padding: 10px 12px;
+    border: 2px solid #dde6ee;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e2b3a;
+    cursor: pointer;
+}
+
+:where(.pg-dibujo) .modo-btn.activo,
+:where(.pg-dibujo) .herr.activo {
+    border-color: #2a6496;
+    background: #eef5fb;
+    color: #1a4a6b;
+}
+
+:where(.pg-dibujo) .subir-foto {
+    display: block;
+    border: 2px dashed #9bb7cf;
+    border-radius: 10px;
+    padding: 28px 16px;
+    text-align: center;
+    color: #2a6496;
+    font-weight: 600;
+    background: #fff;
+    cursor: pointer;
+}
+
+:where(.pg-dibujo) .subir-foto input { display: block; margin: 0 auto 10px; max-width: 100%; }
+
+:where(.pg-dibujo) .vista-previa {
+    display: block;
+    max-width: 100%;
+    max-height: 500px;
+    margin: 15px auto 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+
+:where(.pg-dibujo) .herramientas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+:where(.pg-dibujo) .herr { flex: 1 1 40%; font-size: 13px; padding: 8px; }
+
+:where(.pg-dibujo) .lienzo {
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #ccd6e0;
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    touch-action: none;
+    cursor: crosshair;
+}
+
+:where(.pg-dibujo) .preguntas-dibujo .subtitle { text-align: left; margin-bottom: 15px; }
+
+:where(.pg-dibujo) .preguntas-dibujo textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+:where(.pg-dibujo) .preguntas-dibujo textarea:focus { outline: none; border-color: #2a6496; }
+
+:where(.pg-dibujo) .nota-envio {
+    margin-top: 12px;
+    padding: 12px;
+    background: #e8f7f5;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1f5f53;
+    line-height: 1.5;
 }
 
 /* Responsive */

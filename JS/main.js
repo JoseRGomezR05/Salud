@@ -23,7 +23,7 @@ function pagina(nombre) {
     });
 
     // Cada prueba individual pertenece a la sección "Pruebas"
-    if (paginaActual === 'prueba.html') {
+    if (paginaActual === 'prueba.html' || paginaActual === 'dibujo.html') {
         const pruebas = document.querySelector('.site-nav a[href="pruebas.html"]');
         if (pruebas) pruebas.classList.add('active');
     }
@@ -1233,7 +1233,7 @@ if (pagina('pagos')) (function () {
 // PRUEBA PSICOLÓGICA (prueba.html?p=<clave>)
 // ============================================================
 // Las preguntas de cada prueba están en JS/pruebas-datos.js.
-if (pagina('prueba')) (function () {
+if (pagina('prueba') && !pagina('dibujo')) (function () {
     const clave = new URLSearchParams(location.search).get('p');
     const prueba = (typeof PRUEBAS !== 'undefined' && Object.prototype.hasOwnProperty.call(PRUEBAS, clave))
         ? PRUEBAS[clave] : null;
@@ -1249,7 +1249,7 @@ if (pagina('prueba')) (function () {
 
     const preguntas = prueba.preguntas;
     const respuestas = {};   // índice de pregunta → índice de opción elegida
-    const sufijo = prueba.maximoMostrado === 100 ? '%' : '';
+    const sufijo = prueba.sufijo || '';
 
     // Encabezado de la página
     document.title = `${prueba.titulo} | Bienestar Emocional`;
@@ -1402,5 +1402,334 @@ if (pagina('prueba')) (function () {
     document.getElementById('sendBtn').addEventListener('click', enviarWhatsApp);
 
     dibujarPreguntas();
+    actualizar();
+})();
+
+
+// ============================================================
+// PRUEBAS PROYECTIVAS DE DIBUJO (dibujo.html?p=<clave>)
+// ============================================================
+// Cada dibujo se puede hacer en papel (subiendo una foto) o en la
+// pantalla. No hay calificación automática: se envía al profesional.
+if (pagina('dibujo')) (function () {
+    const clave = new URLSearchParams(location.search).get('p');
+    const prueba = (typeof DIBUJOS !== 'undefined' && Object.prototype.hasOwnProperty.call(DIBUJOS, clave))
+        ? DIBUJOS[clave] : null;
+
+    if (!prueba) {
+        document.getElementById('dibujoTitulo').textContent = 'Prueba no encontrada';
+        document.getElementById('dibujoIntro').innerHTML =
+            'La prueba que buscas no existe. <a href="pruebas.html">Ver todas las pruebas</a>.';
+        document.querySelectorAll('.aviso-prueba, .patient-info-section, .materiales, .preguntas-dibujo, .result-section')
+            .forEach(el => el.hidden = true);
+        return;
+    }
+
+    document.title = `${prueba.titulo} | Bienestar Emocional`;
+    document.getElementById('dibujoCategoria').textContent = prueba.categoria;
+    document.getElementById('dibujoTitulo').textContent = prueba.titulo;
+    document.getElementById('dibujoIntro').textContent = prueba.introduccion;
+    document.getElementById('dibujoReferencia').textContent = prueba.referencia;
+
+    const listaMateriales = document.getElementById('listaMateriales');
+    prueba.materiales.forEach(texto => {
+        const li = document.createElement('li');
+        li.textContent = texto;
+        listaMateriales.appendChild(li);
+    });
+
+    // ---------- Un bloque por cada dibujo ----------
+    const bloques = prueba.dibujos.map((dibujo, n) => crearBloqueDibujo(dibujo, n));
+
+    function crearBloqueDibujo(dibujo, n) {
+        const estado = {
+            modo: 'foto',          // 'foto' o 'pantalla'
+            foto: null,            // archivo subido
+            trazos: [],            // dibujo en pantalla: lista de trazos
+            borrados: 0,
+            inicio: null,
+            fin: null
+        };
+
+        const bloque = document.createElement('div');
+        bloque.className = 'bloque-dibujo';
+        bloque.innerHTML = `
+            <h3></h3>
+            <p class="consigna"></p>
+            <div class="modo-dibujo" role="tablist">
+                <button type="button" class="modo-btn activo" data-modo="foto">📷 Subir foto del dibujo</button>
+                <button type="button" class="modo-btn" data-modo="pantalla">✏️ Dibujar en pantalla</button>
+            </div>
+            <div class="panel-foto">
+                <label class="subir-foto">
+                    <input type="file" accept="image/*">
+                    <span>Toca aquí para tomar o elegir la foto de tu dibujo</span>
+                </label>
+                <img class="vista-previa" alt="" hidden>
+            </div>
+            <div class="panel-pantalla" hidden>
+                <div class="herramientas">
+                    <button type="button" class="herr activo" data-herr="lapiz">✏️ Lápiz</button>
+                    <button type="button" class="herr" data-herr="borrador">🧽 Borrador</button>
+                    <button type="button" class="herr" data-accion="deshacer">↩️ Deshacer</button>
+                    <button type="button" class="herr" data-accion="limpiar">🗑️ Empezar de nuevo</button>
+                </div>
+                <canvas class="lienzo"></canvas>
+            </div>`;
+        bloque.querySelector('h3').textContent = dibujo.titulo;
+        bloque.querySelector('.consigna').textContent = dibujo.consigna;
+        document.getElementById('contenedorDibujos').appendChild(bloque);
+
+        // Cambiar entre foto y pantalla
+        bloque.querySelectorAll('.modo-btn').forEach(boton => {
+            boton.addEventListener('click', () => {
+                estado.modo = boton.dataset.modo;
+                bloque.querySelectorAll('.modo-btn').forEach(b => b.classList.toggle('activo', b === boton));
+                bloque.querySelector('.panel-foto').hidden = estado.modo !== 'foto';
+                bloque.querySelector('.panel-pantalla').hidden = estado.modo !== 'pantalla';
+                if (estado.modo === 'pantalla') ajustarLienzo();
+                actualizar();
+            });
+        });
+
+        // Subir foto
+        const entrada = bloque.querySelector('input[type="file"]');
+        const vista = bloque.querySelector('.vista-previa');
+        entrada.addEventListener('change', () => {
+            const archivo = entrada.files[0];
+            if (!archivo || !archivo.type.startsWith('image/')) return;
+            estado.foto = archivo;
+            if (vista.src) URL.revokeObjectURL(vista.src);
+            vista.src = URL.createObjectURL(archivo);
+            vista.alt = 'Vista previa de ' + dibujo.titulo;
+            vista.hidden = false;
+            actualizar();
+        });
+
+        // Dibujar en pantalla (proporción de hoja carta vertical)
+        const lienzo = bloque.querySelector('.lienzo');
+        const ctx = lienzo.getContext('2d');
+        let herramienta = 'lapiz';
+        let trazoActual = null;
+
+        function ajustarLienzo() {
+            const ancho = lienzo.clientWidth;
+            if (!ancho) return;
+            const escala = window.devicePixelRatio || 1;
+            lienzo.width = ancho * escala;
+            lienzo.height = ancho * 1.294 * escala;
+            lienzo.style.height = (ancho * 1.294) + 'px';
+            redibujar();
+        }
+
+        // Los puntos se guardan en proporción (0 a 1) para que el dibujo
+        // no se deforme si cambia el tamaño de la pantalla.
+        function redibujar(destino = ctx, ancho = lienzo.width, alto = lienzo.height) {
+            destino.fillStyle = '#ffffff';
+            destino.fillRect(0, 0, ancho, alto);
+            destino.lineCap = 'round';
+            destino.lineJoin = 'round';
+            estado.trazos.forEach(trazo => {
+                destino.strokeStyle = trazo.borrador ? '#ffffff' : '#222222';
+                destino.lineWidth = (trazo.borrador ? 0.03 : 0.004) * ancho;
+                destino.beginPath();
+                trazo.puntos.forEach(([x, y], i) => {
+                    if (i === 0) destino.moveTo(x * ancho, y * alto);
+                    else destino.lineTo(x * ancho, y * alto);
+                });
+                if (trazo.puntos.length === 1) {
+                    const [x, y] = trazo.puntos[0];
+                    destino.lineTo(x * ancho + 0.1, y * alto + 0.1);
+                }
+                destino.stroke();
+            });
+        }
+
+        function punto(e) {
+            const r = lienzo.getBoundingClientRect();
+            return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+        }
+
+        lienzo.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            lienzo.setPointerCapture(e.pointerId);
+            trazoActual = { borrador: herramienta === 'borrador', puntos: [punto(e)] };
+            estado.trazos.push(trazoActual);
+            if (trazoActual.borrador) estado.borrados++;
+            if (!estado.inicio) estado.inicio = Date.now();
+            redibujar();
+        });
+        lienzo.addEventListener('pointermove', e => {
+            if (!trazoActual) return;
+            trazoActual.puntos.push(punto(e));
+            redibujar();
+        });
+        ['pointerup', 'pointercancel'].forEach(evento => lienzo.addEventListener(evento, () => {
+            if (!trazoActual) return;
+            trazoActual = null;
+            estado.fin = Date.now();
+            actualizar();
+        }));
+
+        bloque.querySelectorAll('.herr').forEach(boton => {
+            boton.addEventListener('click', () => {
+                if (boton.dataset.herr) {
+                    herramienta = boton.dataset.herr;
+                    bloque.querySelectorAll('[data-herr]').forEach(b => b.classList.toggle('activo', b === boton));
+                } else if (boton.dataset.accion === 'deshacer') {
+                    if (estado.trazos.pop()) estado.borrados++;
+                    redibujar();
+                    actualizar();
+                } else if (boton.dataset.accion === 'limpiar') {
+                    if (estado.trazos.length && !confirm('¿Borrar todo el dibujo y empezar de nuevo?')) return;
+                    estado.trazos = [];
+                    estado.inicio = estado.fin = null;
+                    estado.borrados = 0;
+                    redibujar();
+                    actualizar();
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (estado.modo === 'pantalla') ajustarLienzo();
+        });
+
+        return {
+            dibujo,
+            estado,
+            listo() {
+                return estado.modo === 'foto' ? !!estado.foto : estado.trazos.some(t => !t.borrador);
+            },
+            // Devuelve el dibujo como archivo de imagen
+            archivo(nombreBase) {
+                if (estado.modo === 'foto') return Promise.resolve(estado.foto);
+                const salida = document.createElement('canvas');
+                salida.width = 1275;   // hoja carta a 150 ppp
+                salida.height = 1650;
+                redibujar(salida.getContext('2d'), salida.width, salida.height);
+                return new Promise(resolver => salida.toBlob(blob =>
+                    resolver(new File([blob], nombreBase + '.png', { type: 'image/png' })), 'image/png'));
+            },
+            resumen() {
+                if (estado.modo === 'foto') return 'Dibujado en papel (foto adjunta)';
+                const minutos = estado.inicio && estado.fin ? Math.max(1, Math.round((estado.fin - estado.inicio) / 60000)) : '?';
+                return `Dibujado en pantalla · Tiempo aprox.: ${minutos} min · Borrados/correcciones: ${estado.borrados}`;
+            }
+        };
+    }
+
+    // ---------- Preguntas después del dibujo ----------
+    const contenedorPreguntas = document.getElementById('contenedorPreguntas');
+    const campos = prueba.preguntas.map((texto, i) => {
+        const grupo = document.createElement('div');
+        grupo.className = 'form-group';
+        const etiqueta = document.createElement('label');
+        etiqueta.htmlFor = 'pregunta' + i;
+        etiqueta.textContent = `${i + 1}. ${texto}`;
+        const area = document.createElement('textarea');
+        area.id = 'pregunta' + i;
+        area.rows = 2;
+        grupo.appendChild(etiqueta);
+        grupo.appendChild(area);
+        contenedorPreguntas.appendChild(grupo);
+        return area;
+    });
+
+    // ---------- Validación y envío ----------
+    const edad = document.getElementById('edad');
+    const grupoAcudiente = document.getElementById('grupoAcudiente');
+
+    function esMenor() {
+        const valor = parseInt(edad.value, 10);
+        return !isNaN(valor) && valor < 18;
+    }
+
+    function actualizar() {
+        grupoAcudiente.hidden = !esMenor();
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const identificacion = document.getElementById('identificacion').value.trim();
+        const acudiente = document.getElementById('acudiente').value.trim();
+        const acepta = document.getElementById('consentimiento').checked;
+        const dibujosListos = bloques.every(b => b.listo());
+        const boton = document.getElementById('sendBtn');
+        const mensaje = document.getElementById('sendMessage');
+
+        let falta = '';
+        if (!nombre || !identificacion || !edad.value) falta = 'Completa tu nombre, identificación y edad';
+        else if (esMenor() && !acudiente) falta = 'Escribe el nombre del padre, madre o acudiente';
+        else if (!dibujosListos) falta = bloques.length > 1 ? 'Sube o haz todos los dibujos' : 'Sube o haz el dibujo';
+        else if (!acepta) falta = 'Marca la autorización de tratamiento de datos';
+
+        boton.disabled = !!falta;
+        mensaje.textContent = falta || '✓ Listo para enviar';
+        mensaje.style.color = falta ? '#999' : '#25d366';
+    }
+
+    function textoResultado() {
+        let texto =
+            `*${prueba.titulo.toUpperCase()}*\n\n` +
+            `*Datos del paciente:*\n` +
+            `Nombre: ${document.getElementById('nombre').value.trim()}\n` +
+            `Identificación: ${document.getElementById('identificacion').value.trim()}\n` +
+            `Edad: ${edad.value}\n`;
+        if (esMenor()) texto += `Acudiente: ${document.getElementById('acudiente').value.trim()}\n`;
+
+        texto += '\n*Dibujos:*';
+        bloques.forEach(b => { texto += `\n${b.dibujo.titulo}: ${b.resumen()}`; });
+
+        texto += '\n\n*Respuestas:*';
+        prueba.preguntas.forEach((pregunta, i) => {
+            texto += `\n${i + 1}. ${pregunta}\n→ ${campos[i].value.trim() || '(sin respuesta)'}`;
+        });
+        return texto;
+    }
+
+    async function enviar() {
+        const boton = document.getElementById('sendBtn');
+        const nota = document.getElementById('notaEnvio');
+        boton.disabled = true;
+
+        const base = document.getElementById('nombre').value.trim().replace(/[^\wáéíóúñÁÉÍÓÚÑ]+/g, '_') || 'paciente';
+        const archivos = await Promise.all(bloques.map((b, i) => b.archivo(`${base}_${clave}_${i + 1}`)));
+        const texto = textoResultado();
+
+        // En celulares: compartir directamente dibujos y texto (se elige WhatsApp)
+        if (navigator.canShare && navigator.canShare({ files: archivos })) {
+            try {
+                await navigator.share({ title: prueba.titulo, text: texto, files: archivos });
+                nota.hidden = false;
+                nota.textContent = '✓ Enviado. Si WhatsApp no incluyó el texto, pulsa de nuevo el botón para enviarlo.';
+                actualizar();
+                return;
+            } catch (error) {
+                if (error.name === 'AbortError') { actualizar(); return; }
+                // Si falla, se usa el método alternativo
+            }
+        }
+
+        // En computador: descargar los dibujos y abrir WhatsApp con el texto
+        archivos.forEach(archivo => {
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(archivo);
+            enlace.download = archivo.name.includes('.') ? archivo.name : archivo.name + '.png';
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+            setTimeout(() => URL.revokeObjectURL(enlace.href), 10000);
+        });
+        nota.hidden = false;
+        nota.textContent = `Se descargaron tus dibujos (${archivos.length}). En la conversación de WhatsApp que se abrió, ` +
+            'adjunta las imágenes descargadas con el clip 📎 antes o después de enviar el mensaje.';
+        window.open(`https://wa.me/573004804521?text=${encodeURIComponent(texto)}`, '_blank');
+        actualizar();
+    }
+
+    ['nombre', 'identificacion', 'edad', 'acudiente'].forEach(id =>
+        document.getElementById(id).addEventListener('input', actualizar));
+    document.getElementById('consentimiento').addEventListener('change', actualizar);
+    document.getElementById('sendBtn').addEventListener('click', enviar);
+
     actualizar();
 })();
