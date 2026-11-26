@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Panel de administración.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Panel | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-panel">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="organizaciones.html">Organizaciones</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="panel">
+        <!-- Ingreso -->
+        <section id="panelLogin" class="panel-login">
+            <h1>🔐 Panel de administración</h1>
+            <p>Ingresa la clave que te dio la instalación de Google Apps Script.</p>
+            <p class="panel-alerta" id="panelSinApi" hidden>
+                Falta configurar la base de datos: escribe la URL de Apps Script en <code>JS/config.js</code>
+                (ver <code>apps-script/INSTRUCCIONES.md</code>).
+            </p>
+            <form id="panelFormLogin">
+                <label for="panelClave">Clave</label>
+                <input type="password" id="panelClave" autocomplete="current-password" required>
+                <button type="submit" class="panel-btn panel-btn-principal">Entrar</button>
+            </form>
+            <p class="panel-error" id="panelLoginError" role="alert"></p>
+        </section>
+
+        <!-- Aplicación -->
+        <section id="panelApp" hidden>
+            <div class="panel-barra no-imprimir">
+                <h1>Panel de administración</h1>
+                <button type="button" class="panel-btn" id="panelSalir">Salir</button>
+            </div>
+
+            <nav class="panel-tabs no-imprimir" role="tablist">
+                <button type="button" class="panel-tab-btn activo" data-tab="empresas" role="tab">🏢 Empresas</button>
+                <button type="button" class="panel-tab-btn" data-tab="citas" role="tab">📅 Citas</button>
+                <button type="button" class="panel-tab-btn" data-tab="disponibilidad" role="tab">🕒 Disponibilidad</button>
+            </nav>
+
+            <p class="panel-estado no-imprimir" id="panelEstado" role="status"></p>
+
+            <!-- EMPRESAS -->
+            <div class="panel-tab" id="tabEmpresas">
+                <details class="panel-caja" id="cajaNueva">
+                    <summary>➕ Nueva evaluación de empresa</summary>
+                    <form id="formNuevaEmpresa" class="panel-form">
+                        <div class="panel-campos">
+                            <label>Nombre de la empresa *
+                                <input type="text" id="nuevaNombre" required>
+                            </label>
+                            <label>Plan
+                                <select id="nuevaPlan">
+                                    <option value="pequena">Pequeña empresa (1 a 50)</option>
+                                    <option value="mediana">Mediana empresa (51 a 200)</option>
+                                    <option value="grande">Gran empresa (más de 200)</option>
+                                </select>
+                            </label>
+                            <label>Número máximo de participantes
+                                <input type="number" id="nuevaLimite" min="1" placeholder="Vacío = sin límite">
+                            </label>
+                        </div>
+                        <label>Áreas de la empresa (una por línea, opcional)
+                            <textarea id="nuevaAreas" rows="4" placeholder="Administración&#10;Ventas&#10;Producción"></textarea>
+                        </label>
+                        <fieldset class="panel-checks">
+                            <legend>Pruebas</legend>
+                            <div id="nuevaPruebas"></div>
+                        </fieldset>
+                        <button type="submit" class="panel-btn panel-btn-principal">Crear evaluación</button>
+                    </form>
+                </details>
+
+                <div id="listaEmpresas" class="panel-lista"></div>
+            </div>
+
+            <!-- INFORME DE UNA EMPRESA -->
+            <div class="panel-tab" id="tabInforme" hidden>
+                <div class="panel-acciones no-imprimir">
+                    <button type="button" class="panel-btn" id="informeVolver">← Volver</button>
+                    <button type="button" class="panel-btn panel-btn-principal" id="informeImprimir">🖨️ Imprimir / Guardar PDF</button>
+                    <button type="button" class="panel-btn" id="informeExcel">📥 Descargar Excel (CSV)</button>
+                    <button type="button" class="panel-btn panel-btn-peligro" id="informeBorrar">🗑️ Borrar resultados</button>
+                </div>
+                <div id="informe" class="informe"></div>
+            </div>
+
+            <!-- CITAS -->
+            <div class="panel-tab" id="tabCitas" hidden>
+                <div class="panel-filtros">
+                    <label>Profesional
+                        <select id="citasProfesional"></select>
+                    </label>
+                    <label>Mostrar
+                        <select id="citasMostrar">
+                            <option value="proximas">Próximas</option>
+                            <option value="todas">Todas</option>
+                        </select>
+                    </label>
+                    <button type="button" class="panel-btn" id="citasRecargar">↻ Actualizar</button>
+                </div>
+                <div id="listaCitas" class="panel-lista"></div>
+            </div>
+
+            <!-- DISPONIBILIDAD -->
+            <div class="panel-tab" id="tabDisponibilidad" hidden>
+                <div class="panel-caja">
+                    <h2>Horario semanal</h2>
+                    <p class="panel-ayuda">Marca las horas en que cada profesional atiende. Las horas sin marcar
+                    no aparecen en la página de citas.</p>
+                    <label class="panel-filtros">Profesional
+                        <select id="dispProfesional"></select>
+                    </label>
+                    <div class="panel-tabla-scroll">
+                        <table class="panel-horario" id="gridHorario"></table>
+                    </div>
+                    <button type="button" class="panel-btn panel-btn-principal" id="dispGuardar">Guardar horario</button>
+                </div>
+
+                <div class="panel-caja">
+                    <h2>Días sin atención</h2>
+                    <p class="panel-ayuda">Vacaciones, festivos o días libres. Ese día no se podrán agendar citas.</p>
+                    <form id="formBloqueo" class="panel-campos">
+                        <label>Fecha *
+                            <input type="date" id="bloqueoFecha" required>
+                        </label>
+                        <label>Profesional
+                            <select id="bloqueoProfesional"></select>
+                        </label>
+                        <label>Motivo
+                            <input type="text" id="bloqueoMotivo" placeholder="Ej.: festivo, vacaciones">
+                        </label>
+                        <button type="submit" class="panel-btn panel-btn-principal">Agregar</button>
+                    </form>
+                    <div id="listaBloqueos" class="panel-lista"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/config.js"></script>
+    <script src="JS/pruebas-datos.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>

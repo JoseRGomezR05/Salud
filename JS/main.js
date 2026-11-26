@@ -61,6 +61,30 @@ document.querySelectorAll('.site-year').forEach(el => {
     document.body.appendChild(enlace);
 })();
 
+// ¿Está configurada la base de datos (Google Apps Script)? Ver JS/config.js
+function apiActiva() {
+    return typeof API_URL !== 'undefined' && !!API_URL;
+}
+
+// Envía una acción a Google Apps Script y devuelve la respuesta (JSON).
+// Se usa text/plain para evitar la verificación previa (CORS) que Apps Script no admite.
+async function llamarAPI(accion, datos = {}) {
+    const respuesta = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ accion }, datos))
+    });
+    if (!respuesta.ok) throw new Error('Error del servidor (' + respuesta.status + ')');
+    return respuesta.json();
+}
+
+// Escapa texto para insertarlo en HTML de forma segura
+function esc(valor) {
+    return String(valor === undefined || valor === null ? '' : valor)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Muestra un mensaje de error debajo de un campo (en lugar de alert)
 function mostrarAviso(campo, mensaje) {
     if (!campo) return;
@@ -216,6 +240,7 @@ if (pagina('agendas')) (function () {
             selectedProfessionalPhone = card.dataset.phone;
             updateSubmitButtonState();
             updateServicesSummary();
+            checkTimeAvailability();
         };
 
         card.addEventListener('click', toggleProfessionalSelection);
@@ -247,6 +272,7 @@ if (pagina('agendas')) (function () {
             updateSubmitButtonState();
             // Actualizar resumen de servicios
             updateServicesSummary();
+            checkTimeAvailability();
         };
 
         // Añadir eventos para mouse y teclado
@@ -400,21 +426,62 @@ if (pagina('agendas')) (function () {
         const message = generateWhatsAppMessage(formData);
         const whatsappUrl = `https://wa.me/${selectedProfessionalPhone}?text=${message}`;
 
-        // Enviar a WhatsApp
-        window.open(whatsappUrl, '_blank');
+        // Mostrar confirmación y limpiar el formulario
+        function finalizarReserva() {
+            showModal();
+            appointmentForm.reset();
+            serviceCards.forEach(card => card.classList.remove('selected'));
+            professionalCards.forEach(card => card.classList.remove('selected'));
+            selectedServices.clear();
+            selectedProfessional = null;
+            selectedProfessionalPhone = null;
+            updateSubmitButtonState();
+            updateServicesSummary();
+            checkTimeAvailability();
+        }
 
-        // Mostrar modal de confirmación
-        showModal();
+        // Sin base de datos: solo WhatsApp (como antes)
+        if (!apiActiva()) {
+            window.open(whatsappUrl, '_blank');
+            finalizarReserva();
+            return;
+        }
 
-        // Limpiar formulario
-        appointmentForm.reset();
-        serviceCards.forEach(card => card.classList.remove('selected'));
-        professionalCards.forEach(card => card.classList.remove('selected'));
-        selectedServices.clear();
-        selectedProfessional = null;
-        selectedProfessionalPhone = null;
-        updateSubmitButtonState();
-        updateServicesSummary();
+        // Con base de datos: primero se reserva la hora y luego se abre WhatsApp.
+        // La ventana se abre ya, para que el navegador no la bloquee.
+        const ventana = window.open('', '_blank');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Reservando...';
+
+        llamarAPI('crearCita', {
+            fecha: formData.date,
+            hora: formData.time,
+            duracion: duracionTotal(),
+            profesional: selectedProfessional,
+            servicios: getSelectedServicesText().replace(/\n• /g, ', '),
+            nombre: formData.name,
+            telefono: formData.phone,
+            correo: formData.email,
+            mensaje: formData.message
+        }).then(r => {
+            if (!r.ok) {
+                if (ventana) ventana.close();
+                mostrarAviso(submitButton, r.error || 'No se pudo reservar la cita. Intenta de nuevo.');
+                if (r.ocupado) checkTimeAvailability();
+                return;
+            }
+            if (ventana) ventana.location.href = whatsappUrl;
+            else window.open(whatsappUrl, '_blank');
+            finalizarReserva();
+        }).catch(() => {
+            // Si la base de datos no responde, la cita igual se envía por WhatsApp
+            if (ventana) ventana.location.href = whatsappUrl;
+            else window.open(whatsappUrl, '_blank');
+            finalizarReserva();
+        }).finally(() => {
+            submitButton.textContent = 'Reservar Cita';
+            updateSubmitButtonState();
+        });
     });
 
     // Cerrar modal al hacer clic fuera
@@ -472,37 +539,62 @@ if (pagina('agendas')) (function () {
         document.getElementById('total-price').textContent = `Total: ${formattedPrice}`;
     }
 
-    // Función para comprobar disponibilidad de horarios
-    function checkTimeAvailability() {
-        const dateInput = document.getElementById('date');
+    // Duración total de los servicios elegidos (mínimo 45 minutos)
+    function duracionTotal() {
+        const minutos = Array.from(serviceCards)
+            .filter(card => card.classList.contains('selected'))
+            .reduce((suma, card) => suma + (parseInt(card.dataset.duration, 10) || 0), 0);
+        return Math.max(45, minutos);
+    }
+
+    // Consulta en la base de datos qué horas están libres para la fecha y el profesional.
+    // Si la base de datos no está configurada o no responde, todas las horas quedan disponibles.
+    let consultaHoras = 0;
+    async function checkTimeAvailability() {
         const timeSelect = document.getElementById('time');
-
-        if (!dateInput.value) return;
-
-        // Aquí podrías hacer una petición al servidor para verificar horarios disponibles
-        // Por ahora, simulamos que algunos horarios no están disponibles
-
-        // Ejemplo: los lunes no hay citas disponibles por la mañana
-        const [year, month, day] = dateInput.value.split('-').map(Number);
-        const dayOfWeek = new Date(year, month - 1, day).getDay();
-
-        // Resetear todas las opciones
         Array.from(timeSelect.options).forEach(option => {
-            option.disabled = false;
-        });
-
-        // Ejemplo: Si es lunes (1), deshabilitamos los horarios de la mañana
-        if (dayOfWeek === 1) {
-            Array.from(timeSelect.options).forEach(option => {
-                if (option.value && option.value.includes('AM')) {
-                    option.disabled = true;
-                }
-            });
-
-            // Si ya había seleccionado un horario de mañana, lo reseteamos
-            if (timeSelect.value && timeSelect.value.includes('AM')) {
-                timeSelect.value = '';
+            if (option.value) {
+                option.disabled = false;
+                option.textContent = option.value;
             }
+        });
+        quitarAviso(timeSelect);
+
+        if (!dateInput.value || !selectedProfessional || !apiActiva()) return;
+
+        const consulta = ++consultaHoras;
+        timeSelect.disabled = true;
+        try {
+            const r = await llamarAPI('horarios', {
+                fecha: dateInput.value,
+                profesional: selectedProfessional,
+                duracion: duracionTotal(),
+                horas: Array.from(timeSelect.options).map(o => o.value).filter(Boolean)
+            });
+            if (consulta !== consultaHoras || !r.ok) return;
+
+            const opciones = Array.from(timeSelect.options).filter(o => o.value);
+            if (!r.abierto) {
+                opciones.forEach(o => { o.disabled = true; });
+                mostrarAviso(timeSelect, r.motivo || 'No hay atención este día. Por favor elige otra fecha.');
+            } else {
+                r.horas.forEach(h => {
+                    const opcion = opciones.find(o => o.value === h.hora);
+                    if (opcion && !h.libre) {
+                        opcion.disabled = true;
+                        opcion.textContent = h.hora + (h.habilitada ? ' (ocupada)' : ' (no disponible)');
+                    }
+                });
+                if (!opciones.some(o => !o.disabled)) {
+                    mostrarAviso(timeSelect, 'No quedan horas libres este día con este profesional. Prueba otra fecha.');
+                }
+            }
+            if (timeSelect.selectedOptions[0] && timeSelect.selectedOptions[0].disabled) timeSelect.value = '';
+        } catch (error) {
+            console.warn('No se pudo consultar la disponibilidad:', error);
+        } finally {
+            if (consulta === consultaHoras) timeSelect.disabled = false;
+            updateSubmitButtonState();
         }
     }
 
@@ -1233,7 +1325,7 @@ if (pagina('pagos')) (function () {
 // PRUEBA PSICOLÓGICA (prueba.html?p=<clave>)
 // ============================================================
 // Las preguntas de cada prueba están en JS/pruebas-datos.js.
-if (pagina('prueba') && !pagina('dibujo')) (function () {
+if (pagina('prueba') && !pagina('dibujo') && !pagina('evaluacion')) (function () {
     const clave = new URLSearchParams(location.search).get('p');
     const prueba = (typeof PRUEBAS !== 'undefined' && Object.prototype.hasOwnProperty.call(PRUEBAS, clave))
         ? PRUEBAS[clave] : null;
@@ -1740,82 +1832,8 @@ if (pagina('dibujo')) (function () {
 // ============================================================
 // Las pruebas se toman de JS/pruebas-datos.js (PRUEBAS).
 if (pagina('organizaciones')) (function () {
-    // Qué mide cada prueba (texto para las empresas)
-    const DESCRIPCIONES = {
-        cbi: 'Agotamiento físico y emocional relacionado con el trabajo.',
-        satisfaccionLaboral: 'Satisfacción con 15 aspectos del trabajo: salario, jefe, compañeros, horario, estabilidad y más.',
-        climaLaboral: 'Respeto, comunicación, justicia, recursos y sentido de pertenencia.',
-        estresLaboral: 'Carga de trabajo, claridad de funciones, control, reconocimiento y presión por plazos.',
-        desgasteLaboral: 'Señales de burnout: agotamiento, distanciamiento y pérdida de sentido del trabajo.',
-        trabajoEquipo: 'Objetivos, roles, confianza, cooperación y manejo de diferencias en el equipo.',
-        liderazgo: 'Cómo perciben los trabajadores a sus jefes directos.',
-        balanceVidaTrabajo: 'Conflicto entre las exigencias del trabajo y la vida personal y familiar.',
-        k10: 'Nivel general de malestar psicológico (nerviosismo, tristeza, desesperanza).',
-        gad7: 'Síntomas de ansiedad en las últimas 2 semanas.',
-        phq9: 'Síntomas depresivos en las últimas 2 semanas.'
-    };
-
-    const PLANES = {
-        pequena: {
-            nombre: 'Pequeña empresa',
-            descripcion: 'Una evaluación corta y económica para empresas de 1 a 50 trabajadores. ' +
-                'Mide lo esencial (agotamiento, clima y estrés) y entrega recomendaciones fáciles de aplicar. ' +
-                'En equipos de menos de 10 personas los resultados se presentan solo de forma general, para proteger el anonimato.',
-            pruebas: ['cbi', 'climaLaboral', 'estresLaboral'],
-            opcionales: [],
-            servicios: [
-                'Reunión inicial virtual con el dueño o gerente.',
-                'Aplicación anónima en línea o en papel.',
-                'Análisis de resultados del equipo.',
-                'Una charla de 1 hora sobre manejo del estrés.'
-            ],
-            entregables: [
-                'Informe resumido de bienestar laboral.',
-                'De 3 a 5 recomendaciones prácticas y de bajo costo.'
-            ]
-        },
-        mediana: {
-            nombre: 'Mediana empresa',
-            descripcion: 'Un diagnóstico completo y ágil del bienestar laboral, pensado para empresas de 51 a 200 trabajadores. ' +
-                'Identifica los principales factores de riesgo y entrega recomendaciones prácticas para la dirección.',
-            pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'trabajoEquipo'],
-            opcionales: [],
-            servicios: [
-                'Reunión inicial con la gerencia o Talento Humano.',
-                'Aplicación anónima en línea o en papel.',
-                'Análisis de resultados de toda la empresa.',
-                'Un taller grupal (manejo del estrés o comunicación asertiva).',
-                'Socialización de resultados con la dirección.'
-            ],
-            entregables: [
-                'Informe general de bienestar laboral.',
-                'Mapa de los principales factores de riesgo y fortalezas.',
-                'Recomendaciones priorizadas de intervención.'
-            ]
-        },
-        grande: {
-            nombre: 'Gran empresa',
-            descripcion: 'Un programa integral para organizaciones de más de 200 trabajadores, con resultados por área o sede, ' +
-                'plan de intervención y medición de seguimiento para ver el impacto de las acciones.',
-            pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'desgasteLaboral',
-                'trabajoEquipo', 'liderazgo', 'balanceVidaTrabajo'],
-            opcionales: ['k10', 'gad7', 'phq9'],
-            servicios: [
-                'Reuniones de planeación con gerencia, Talento Humano y SST.',
-                'Aplicación anónima en línea o en papel, por áreas o sedes.',
-                'Análisis comparativo entre áreas, sedes y cargos.',
-                'Ciclo de 3 talleres (estrés, liderazgo y trabajo en equipo).',
-                'Espacios de escucha y orientación para trabajadores que lo soliciten.',
-                'Nueva medición a los 6 meses para comparar resultados.'
-            ],
-            entregables: [
-                'Informe general y un informe por cada área o sede.',
-                'Tablero de indicadores de bienestar laboral.',
-                'Plan de intervención con responsables y fechas.',
-                'Informe de seguimiento con la comparación antes y después.'
-            ]
-        }
-    };
+    const DESCRIPCIONES = DESCRIPCIONES_ORG;
+    const PLANES = PLANES_ORG;
 
     let planActual = 'pequena';
 
@@ -1963,4 +1981,642 @@ if (pagina('organizaciones')) (function () {
 
     mostrarPlan(planActual);
     aplicarPlanAlFormulario(planActual);
+})();
+
+
+// ============================================================
+// EVALUACIÓN ANÓNIMA PARA EMPRESAS (evaluacion.html?empresa=CODIGO)
+// ============================================================
+if (pagina('evaluacion')) (async function () {
+    const $ = id => document.getElementById(id);
+    const codigo = (new URLSearchParams(location.search).get('empresa') || '').trim().toUpperCase();
+    const claveLocal = 'evaluacion_enviada_' + codigo;
+
+    function mostrarError(mensaje) {
+        $('evalTitulo').textContent = 'Evaluación no disponible';
+        $('evalMensaje').textContent = mensaje;
+        $('evalMensaje').hidden = false;
+    }
+
+    if (!apiActiva()) return mostrarError('La evaluación todavía no está configurada. Por favor comunícate con Bienestar Emocional.');
+    if (!codigo) return mostrarError('El enlace está incompleto: falta el código de la empresa.');
+
+    let empresa;
+    try {
+        const r = await llamarAPI('empresa', { codigo });
+        if (!r.ok) return mostrarError(r.error);
+        empresa = r.empresa;
+    } catch (error) {
+        return mostrarError('No se pudo conectar. Revisa tu conexión a internet e intenta de nuevo.');
+    }
+
+    const pruebas = empresa.pruebas.filter(k => PRUEBAS[k]);
+    const totalPreguntas = pruebas.reduce((suma, k) => suma + PRUEBAS[k].preguntas.length, 0);
+    const respuestas = {};
+    pruebas.forEach(k => { respuestas[k] = []; });
+    let actual = 0;
+
+    $('evalTitulo').textContent = empresa.nombre;
+    $('evalSubtitulo').textContent =
+        `${pruebas.length} cuestionario${pruebas.length === 1 ? '' : 's'} · ${totalPreguntas} preguntas · unos ${Math.max(1, Math.round(totalPreguntas * 12 / 60))} minutos`;
+
+    // Paso 1
+    if (empresa.areas.length) {
+        $('grupoArea').hidden = false;
+        $('evalArea').innerHTML = '<option value="">Selecciona tu área</option>' +
+            empresa.areas.map(a => `<option>${esc(a)}</option>`).join('');
+    }
+    try { $('evalYaRespondio').hidden = !localStorage.getItem(claveLocal); } catch (e) { /* sin almacenamiento */ }
+
+    function revisarInicio() {
+        $('evalComenzar').disabled = !$('evalConsentimiento').checked || (empresa.areas.length && !$('evalArea').value);
+    }
+    $('evalConsentimiento').addEventListener('change', revisarInicio);
+    $('evalArea').addEventListener('change', revisarInicio);
+    $('pasoInicio').hidden = false;
+
+    $('evalComenzar').addEventListener('click', () => {
+        $('pasoInicio').hidden = true;
+        $('pasoPrueba').hidden = false;
+        mostrarPrueba();
+    });
+
+    // Paso 2
+    function mostrarPrueba() {
+        const clave = pruebas[actual];
+        const prueba = PRUEBAS[clave];
+        $('evalPruebaTitulo').textContent = prueba.titulo;
+        $('evalInstrucciones').textContent = prueba.instrucciones;
+        $('evalSiguiente').textContent = actual === pruebas.length - 1 ? 'Enviar respuestas' : 'Siguiente cuestionario →';
+        dibujarPreguntas();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function dibujarPreguntas() {
+        const clave = pruebas[actual];
+        const prueba = PRUEBAS[clave];
+        const elegidas = respuestas[clave];
+        const contenedor = $('evalPreguntas');
+        contenedor.innerHTML = '';
+
+        prueba.preguntas.forEach((pregunta, i) => {
+            const bloque = document.createElement('div');
+            bloque.className = 'question-item';
+            const titulo = document.createElement('h3');
+            titulo.textContent = `${i + 1}. ${pregunta.texto}`;
+            const opcionesDiv = document.createElement('div');
+            opcionesDiv.className = 'options';
+            opcionesDiv.setAttribute('role', 'radiogroup');
+
+            opcionesDePregunta(prueba, pregunta).forEach((opcion, j) => {
+                const elegida = elegidas[i] === j;
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.className = 'option-button' + (elegida ? ' selected' : '');
+                boton.setAttribute('role', 'radio');
+                boton.setAttribute('aria-checked', elegida);
+                boton.innerHTML = `<div class="checkbox">${elegida ? '<div class="checkmark"></div>' : ''}</div><span class="option-text"></span>`;
+                boton.querySelector('.option-text').textContent = opcion.texto;
+                boton.addEventListener('click', () => {
+                    elegidas[i] = j;
+                    dibujarPreguntas();
+                });
+                opcionesDiv.appendChild(boton);
+            });
+
+            bloque.appendChild(titulo);
+            bloque.appendChild(opcionesDiv);
+            contenedor.appendChild(bloque);
+        });
+        actualizarProgreso();
+    }
+
+    function actualizarProgreso() {
+        const respondidasTotal = pruebas.reduce((suma, k) => suma + respuestas[k].filter(v => v !== undefined).length, 0);
+        const clave = pruebas[actual];
+        const faltan = PRUEBAS[clave].preguntas.length - respuestas[clave].filter(v => v !== undefined).length;
+        $('evalProgresoTexto').textContent = `Cuestionario ${actual + 1} de ${pruebas.length} · ${respondidasTotal} de ${totalPreguntas} preguntas respondidas`;
+        $('evalProgreso').style.width = (respondidasTotal / totalPreguntas * 100) + '%';
+        $('evalSiguiente').disabled = faltan > 0;
+        $('evalFaltan').textContent = faltan > 0 ? `Faltan ${faltan} pregunta${faltan === 1 ? '' : 's'} por responder` : '';
+    }
+
+    $('evalSiguiente').addEventListener('click', async () => {
+        if (actual < pruebas.length - 1) {
+            actual++;
+            mostrarPrueba();
+            return;
+        }
+        await enviar();
+    });
+
+    function hayRiesgo() {
+        return pruebas.some(k => {
+            const alerta = PRUEBAS[k].alertaCrisis;
+            const elegida = alerta ? respuestas[k][alerta.pregunta] : undefined;
+            return elegida !== undefined && puntajePregunta(PRUEBAS[k], alerta.pregunta, elegida) >= alerta.desde;
+        });
+    }
+
+    async function enviar() {
+        const boton = $('evalSiguiente');
+        boton.disabled = true;
+        boton.textContent = 'Enviando...';
+        quitarAviso(boton);
+
+        const resultados = pruebas.map(k => {
+            const c = calificarPrueba(PRUEBAS[k], respuestas[k]);
+            return { prueba: k, puntaje: c.total, nivel: c.nivel, respuestas: respuestas[k] };
+        });
+
+        try {
+            const r = await llamarAPI('enviarEvaluacion', { codigo, area: $('evalArea').value, resultados });
+            if (!r.ok) throw new Error(r.error);
+        } catch (error) {
+            mostrarAviso(boton, (error.message && !/fetch/i.test(error.message) ? error.message : 'No se pudo enviar.') +
+                ' Revisa tu conexión y vuelve a intentarlo; tus respuestas no se han perdido.');
+            boton.disabled = false;
+            boton.textContent = 'Reintentar envío';
+            return;
+        }
+
+        try { localStorage.setItem(claveLocal, '1'); } catch (e) { /* sin almacenamiento */ }
+        $('pasoPrueba').hidden = true;
+        $('pasoFin').hidden = false;
+        $('evalCrisis').hidden = !hayRiesgo();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    $('evalOtra').addEventListener('click', () => location.reload());
+})();
+
+
+// ============================================================
+// PANEL DE ADMINISTRACIÓN (panel.html)
+// ============================================================
+if (pagina('panel')) (function () {
+    const $ = id => document.getElementById(id);
+    const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const NIVELES = { ok: 'Favorable', leve: 'Atención', alto: 'Riesgo' };
+    let clave = '';
+    try { clave = sessionStorage.getItem('panel_clave') || ''; } catch (e) { /* sin almacenamiento */ }
+
+    // ---------- Comunicación ----------
+    function estado(mensaje, tipo) {
+        const el = $('panelEstado');
+        el.textContent = mensaje || '';
+        el.className = 'panel-estado no-imprimir' + (tipo ? ' ' + tipo : '');
+    }
+
+    async function api(accion, datos = {}) {
+        estado('Cargando...');
+        try {
+            const r = await llamarAPI(accion, Object.assign({ clave }, datos));
+            if (r.clave === false) { salir('La clave no es correcta.'); throw new Error('Clave incorrecta.'); }
+            if (!r.ok) throw new Error(r.error || 'Error desconocido.');
+            estado('');
+            return r;
+        } catch (error) {
+            estado('⚠️ ' + (/fetch/i.test(error.message) ? 'No se pudo conectar con la base de datos.' : error.message), 'error');
+            throw error;
+        }
+    }
+
+    // ---------- Ingreso ----------
+    if (!apiActiva()) $('panelSinApi').hidden = false;
+
+    $('panelFormLogin').addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!apiActiva()) return;
+        $('panelLoginError').textContent = '';
+        clave = $('panelClave').value;
+        try {
+            const r = await llamarAPI('login', { clave });
+            if (!r.ok) throw new Error(r.error);
+            try { sessionStorage.setItem('panel_clave', clave); } catch (err) { /* sin almacenamiento */ }
+            entrar();
+        } catch (error) {
+            $('panelLoginError').textContent = /fetch/i.test(error.message) ? 'No se pudo conectar con la base de datos.' : error.message;
+        }
+    });
+
+    function entrar() {
+        $('panelLogin').hidden = true;
+        $('panelApp').hidden = false;
+        mostrarTab('empresas');
+    }
+
+    function salir(mensaje) {
+        clave = '';
+        try { sessionStorage.removeItem('panel_clave'); } catch (e) { /* sin almacenamiento */ }
+        $('panelApp').hidden = true;
+        $('panelLogin').hidden = false;
+        $('panelLoginError').textContent = mensaje || '';
+    }
+    $('panelSalir').addEventListener('click', () => salir());
+
+    // ---------- Pestañas ----------
+    function mostrarTab(nombre) {
+        document.querySelectorAll('.panel-tab-btn').forEach(b => b.classList.toggle('activo', b.dataset.tab === nombre));
+        ['empresas', 'informe', 'citas', 'disponibilidad'].forEach(t => {
+            $('tab' + t.charAt(0).toUpperCase() + t.slice(1)).hidden = t !== nombre;
+        });
+        if (nombre === 'empresas') cargarEmpresas();
+        if (nombre === 'citas') cargarCitas();
+        if (nombre === 'disponibilidad') cargarDisponibilidad();
+    }
+    document.querySelectorAll('.panel-tab-btn').forEach(b => b.addEventListener('click', () => mostrarTab(b.dataset.tab)));
+
+    // ========== EMPRESAS ==========
+    const pruebasOrg = [...new Set([].concat(...Object.values(PLANES_ORG).map(p => p.pruebas.concat(p.opcionales))))];
+    $('nuevaPruebas').innerHTML = pruebasOrg.map(k =>
+        `<label class="panel-check"><input type="checkbox" value="${k}"> ${esc(PRUEBAS[k].titulo)}</label>`).join('');
+
+    function marcarPlan() {
+        const plan = PLANES_ORG[$('nuevaPlan').value];
+        $('nuevaPruebas').querySelectorAll('input').forEach(c => { c.checked = plan.pruebas.includes(c.value); });
+    }
+    $('nuevaPlan').addEventListener('change', marcarPlan);
+    marcarPlan();
+
+    function enlaceEvaluacion(codigo) {
+        const base = location.protocol.startsWith('http') ? location.href : (SITIO_URL || location.href);
+        return new URL('evaluacion.html?empresa=' + codigo, base).href;
+    }
+
+    $('formNuevaEmpresa').addEventListener('submit', async e => {
+        e.preventDefault();
+        const pruebas = [...$('nuevaPruebas').querySelectorAll('input:checked')].map(c => c.value);
+        if (!$('nuevaNombre').value.trim()) return mostrarAviso($('nuevaNombre'), 'Escribe el nombre de la empresa.');
+        quitarAviso($('nuevaNombre'));
+        if (!pruebas.length) return estado('⚠️ Elige al menos una prueba.', 'error');
+        try {
+            const r = await api('crearEmpresa', {
+                nombre: $('nuevaNombre').value,
+                plan: $('nuevaPlan').value,
+                limite: $('nuevaLimite').value,
+                areas: $('nuevaAreas').value.split('\n').map(a => a.trim()).filter(Boolean),
+                pruebas
+            });
+            $('formNuevaEmpresa').reset();
+            marcarPlan();
+            $('cajaNueva').open = false;
+            await cargarEmpresas();
+            estado('✓ Evaluación creada. Código: ' + r.codigo, 'ok');
+        } catch (error) { /* el mensaje ya se mostró */ }
+    });
+
+    async function cargarEmpresas() {
+        let r;
+        try { r = await api('listarEmpresas'); } catch (e) { return; }
+        const lista = $('listaEmpresas');
+        if (!r.empresas.length) {
+            lista.innerHTML = '<p class="panel-vacio">Todavía no hay evaluaciones. Crea la primera con el botón de arriba.</p>';
+            return;
+        }
+        lista.innerHTML = r.empresas.map(e => {
+            const enlace = enlaceEvaluacion(e.codigo);
+            const plan = PLANES_ORG[e.plan] ? PLANES_ORG[e.plan].nombre : '';
+            return `
+            <article class="panel-item" data-codigo="${esc(e.codigo)}">
+                <div class="panel-item-info">
+                    <h3>${esc(e.nombre)} <span class="panel-badge ${e.estado === 'abierta' ? 'ok' : 'gris'}">${e.estado === 'abierta' ? 'Abierta' : 'Cerrada'}</span></h3>
+                    <p>${esc(plan)} · Código <strong>${esc(e.codigo)}</strong> · Creada ${esc(e.creada)}</p>
+                    <p><strong>${e.participantes}</strong>${e.limite ? ' de ' + esc(e.limite) : ''} participantes · ${e.pruebas.split(',').length} pruebas</p>
+                    <input class="panel-enlace" type="text" readonly value="${esc(enlace)}" aria-label="Enlace de la evaluación">
+                </div>
+                <div class="panel-item-acciones">
+                    <button type="button" class="panel-btn panel-btn-principal" data-accion="informe">📊 Ver informe</button>
+                    <button type="button" class="panel-btn" data-accion="copiar">📋 Copiar enlace</button>
+                    <a class="panel-btn" target="_blank" rel="noopener"
+                       href="https://wa.me/?text=${encodeURIComponent('Te invitamos a responder la evaluación anónima de bienestar laboral de ' + e.nombre + ': ' + enlace)}">📱 Enviar por WhatsApp</a>
+                    <button type="button" class="panel-btn" data-accion="estado">${e.estado === 'abierta' ? '⏸️ Cerrar' : '▶️ Reabrir'}</button>
+                    <button type="button" class="panel-btn panel-btn-peligro" data-accion="eliminar">🗑️ Eliminar</button>
+                </div>
+            </article>`;
+        }).join('');
+
+        lista.querySelectorAll('.panel-item').forEach(item => {
+            const empresa = r.empresas.find(e => e.codigo === item.dataset.codigo);
+            item.querySelectorAll('button[data-accion]').forEach(b => b.addEventListener('click', async () => {
+                const accion = b.dataset.accion;
+                if (accion === 'informe') abrirInforme(empresa.codigo);
+                if (accion === 'copiar') {
+                    const campo = item.querySelector('.panel-enlace');
+                    try { await navigator.clipboard.writeText(campo.value); }
+                    catch (e) { campo.select(); document.execCommand('copy'); }
+                    estado('✓ Enlace copiado.', 'ok');
+                }
+                if (accion === 'estado') {
+                    try {
+                        await api('cambiarEstadoEmpresa', { codigo: empresa.codigo, estado: empresa.estado === 'abierta' ? 'cerrada' : 'abierta' });
+                        cargarEmpresas();
+                    } catch (e) { /* mensaje mostrado */ }
+                }
+                if (accion === 'eliminar') {
+                    const respuesta = prompt(`Se borrarán la empresa "${empresa.nombre}" y TODOS sus resultados.\nEsto no se puede deshacer.\n\nEscribe ELIMINAR para confirmar:`);
+                    if (respuesta !== 'ELIMINAR') return;
+                    try { await api('eliminarEmpresa', { codigo: empresa.codigo }); cargarEmpresas(); estado('✓ Empresa eliminada.', 'ok'); }
+                    catch (e) { /* mensaje mostrado */ }
+                }
+            }));
+        });
+    }
+
+    // ========== INFORME ==========
+    let informeActual = null;
+
+    async function abrirInforme(codigo) {
+        let r;
+        try { r = await api('resultados', { codigo }); } catch (e) { return; }
+        informeActual = r;
+        document.querySelectorAll('.panel-tab-btn').forEach(b => b.classList.remove('activo'));
+        ['Empresas', 'Citas', 'Disponibilidad'].forEach(t => { $('tab' + t).hidden = true; });
+        $('tabInforme').hidden = false;
+        $('informe').innerHTML = construirInforme(r.empresa, r.respuestas);
+        window.scrollTo({ top: 0 });
+    }
+
+    function promedio(lista) {
+        return lista.length ? lista.reduce((a, b) => a + b, 0) / lista.length : 0;
+    }
+
+    function redondear(n) {
+        return Math.round(n * 10) / 10;
+    }
+
+    function construirInforme(empresa, filas) {
+        const participantes = new Set(filas.map(f => f.participante)).size;
+        const fechas = filas.map(f => f.fecha).sort();
+        const claves = empresa.pruebas.split(',').filter(k => PRUEBAS[k]);
+        const hoy = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        let html = `
+            <header class="informe-encabezado">
+                <p class="informe-marca">Bienestar Emocional · Informe de bienestar laboral</p>
+                <h2>${esc(empresa.nombre)}</h2>
+                <p>Fecha del informe: ${hoy}${fechas.length ? ` · Aplicación: ${esc(fechas[0].slice(0, 10))} a ${esc(fechas[fechas.length - 1].slice(0, 10))}` : ''}</p>
+                <div class="informe-cifras">
+                    <div><strong>${participantes}</strong><span>participantes</span></div>
+                    <div><strong>${claves.length}</strong><span>pruebas aplicadas</span></div>
+                    <div><strong>${new Set(filas.map(f => f.area)).size}</strong><span>áreas</span></div>
+                </div>
+            </header>`;
+
+        if (!participantes) {
+            return html + '<p class="panel-vacio">Todavía nadie ha respondido esta evaluación.</p>';
+        }
+        if (participantes < MINIMO_POR_AREA) {
+            html += `<p class="informe-nota">⚠️ Hay menos de ${MINIMO_POR_AREA} participantes. Interprete los resultados con precaución.</p>`;
+        }
+
+        // Resumen por prueba
+        const resumen = claves.map(k => {
+            const prueba = PRUEBAS[k];
+            const deEsta = filas.filter(f => f.prueba === k);
+            const puntajes = deEsta.map(f => Number(f.puntaje));
+            const media = redondear(promedio(puntajes));
+            const conteo = { ok: 0, leve: 0, alto: 0 };
+            deEsta.forEach(f => { if (conteo[f.nivel] !== undefined) conteo[f.nivel]++; });
+            const rangoMedia = prueba.rangos.find(rg => media <= rg.hasta) || prueba.rangos[prueba.rangos.length - 1];
+            return { k, prueba, deEsta, media, conteo, n: deEsta.length, rangoMedia, pctAlto: deEsta.length ? conteo.alto / deEsta.length * 100 : 0 };
+        });
+
+        // Prioridades
+        const prioridades = resumen.filter(r => r.n && r.pctAlto > 0).sort((a, b) => b.pctAlto - a.pctAlto).slice(0, 3);
+        html += '<section class="informe-seccion"><h3>Aspectos prioritarios</h3>';
+        html += prioridades.length
+            ? '<ol class="informe-prioridades">' + prioridades.map(r =>
+                `<li><strong>${esc(r.prueba.titulo)}</strong>: ${Math.round(r.pctAlto)}% del personal en nivel de riesgo.</li>`).join('') + '</ol>'
+            : '<p>Ninguna prueba muestra personas en nivel de riesgo. 🎉</p>';
+        html += '</section>';
+
+        // Detalle por prueba
+        html += '<section class="informe-seccion"><h3>Resultados por prueba</h3>';
+        resumen.forEach(r => {
+            const { min, max } = rangoPuntaje(r.prueba);
+            const pctMedia = max > min ? (r.media - min) / (max - min) * 100 : 0;
+            const pct = n => r.n ? Math.round(n / r.n * 100) : 0;
+            html += `
+            <article class="informe-prueba">
+                <div class="informe-prueba-encabezado">
+                    <h4>${esc(r.prueba.titulo)}</h4>
+                    <span class="panel-badge ${r.rangoMedia.nivel}">${esc(NIVELES[r.rangoMedia.nivel])}</span>
+                </div>
+                <p class="informe-media">Promedio: <strong>${r.media}${r.prueba.sufijo || ''}</strong> (escala ${min} a ${max}) · ${esc(r.rangoMedia.texto)} · ${r.n} respuestas</p>
+                <div class="informe-barra-media" aria-hidden="true"><span style="width:${pctMedia}%"></span></div>
+                <div class="informe-distribucion" role="img" aria-label="Favorable ${pct(r.conteo.ok)}%, atención ${pct(r.conteo.leve)}%, riesgo ${pct(r.conteo.alto)}%">
+                    ${['ok', 'leve', 'alto'].map(n => r.conteo[n] ? `<span class="${n}" style="width:${pct(r.conteo[n])}%">${pct(r.conteo[n])}%</span>` : '').join('')}
+                </div>
+                <p class="informe-leyenda">
+                    <span class="punto ok"></span> Favorable: ${r.conteo.ok}
+                    <span class="punto leve"></span> Atención: ${r.conteo.leve}
+                    <span class="punto alto"></span> Riesgo: ${r.conteo.alto}
+                </p>
+                ${tablaAreas(r)}
+            </article>`;
+        });
+        html += '</section>';
+
+        html += `<p class="informe-pie">Resultados anónimos y agrupados. Las áreas con menos de ${MINIMO_POR_AREA} personas no se muestran por separado para proteger la identidad de los participantes. Este informe es orientativo y no constituye un diagnóstico individual.</p>`;
+        return html;
+    }
+
+    function tablaAreas(r) {
+        const areas = [...new Set(r.deEsta.map(f => f.area))].sort();
+        if (areas.length < 2) return '';
+        const filas = areas.map(area => {
+            const deArea = r.deEsta.filter(f => f.area === area);
+            if (deArea.length < MINIMO_POR_AREA) {
+                return `<tr><td>${esc(area)}</td><td>${deArea.length}</td><td colspan="2" class="informe-oculto">Menos de ${MINIMO_POR_AREA} personas</td></tr>`;
+            }
+            const media = redondear(promedio(deArea.map(f => Number(f.puntaje))));
+            const alto = Math.round(deArea.filter(f => f.nivel === 'alto').length / deArea.length * 100);
+            return `<tr><td>${esc(area)}</td><td>${deArea.length}</td><td>${media}${r.prueba.sufijo || ''}</td><td>${alto}%</td></tr>`;
+        }).join('');
+        return `<table class="informe-tabla"><thead><tr><th>Área</th><th>Personas</th><th>Promedio</th><th>En riesgo</th></tr></thead><tbody>${filas}</tbody></table>`;
+    }
+
+    $('informeVolver').addEventListener('click', () => mostrarTab('empresas'));
+    $('informeImprimir').addEventListener('click', () => window.print());
+
+    $('informeExcel').addEventListener('click', () => {
+        if (!informeActual) return;
+        const columnas = ['fecha', 'participante', 'area', 'prueba', 'puntaje', 'nivel'];
+        const celda = v => '"' + String(v).replace(/"/g, '""') + '"';
+        const lineas = [columnas.join(';')].concat(informeActual.respuestas.map(f => [
+            f.fecha, f.participante, f.area, PRUEBAS[f.prueba] ? PRUEBAS[f.prueba].titulo : f.prueba,
+            String(f.puntaje).replace('.', ','), NIVELES[f.nivel] || f.nivel
+        ].map(celda).join(';')));
+        const blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const enlace = document.createElement('a');
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = `resultados_${informeActual.empresa.nombre.replace(/[^\wáéíóúñÁÉÍÓÚÑ]+/g, '_')}.csv`;
+        enlace.click();
+        setTimeout(() => URL.revokeObjectURL(enlace.href), 5000);
+    });
+
+    $('informeBorrar').addEventListener('click', async () => {
+        if (!informeActual) return;
+        const e = informeActual.empresa;
+        const respuesta = prompt(`Se borrarán TODOS los resultados de "${e.nombre}". La empresa y su enlace se conservan.\n` +
+            'Antes de borrar, imprime o descarga el informe.\n\nEscribe BORRAR para confirmar:');
+        if (respuesta !== 'BORRAR') return;
+        try {
+            const r = await api('borrarResultados', { codigo: e.codigo });
+            await abrirInforme(e.codigo);
+            estado(`✓ Se borraron ${r.borradas} respuestas. El espacio quedó libre.`, 'ok');
+        } catch (err) { /* mensaje mostrado */ }
+    });
+
+    // ========== CITAS ==========
+    const opcionesProfesionales = '<option value="">Todos</option>' + PROFESIONALES.map(p => `<option>${esc(p)}</option>`).join('');
+    $('citasProfesional').innerHTML = opcionesProfesionales;
+    $('citasProfesional').addEventListener('change', () => pintarCitas());
+    $('citasMostrar').addEventListener('change', () => pintarCitas());
+    $('citasRecargar').addEventListener('click', () => cargarCitas());
+
+    let citas = [];
+
+    function aMinutos(hora) {
+        const m = String(hora).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!m) return 0;
+        return (parseInt(m[1], 10) % 12 + (m[3].toUpperCase() === 'PM' ? 12 : 0)) * 60 + parseInt(m[2], 10);
+    }
+
+    function fechaLarga(fecha) {
+        const [a, m, d] = fecha.split('-').map(Number);
+        return new Date(a, m - 1, d).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    async function cargarCitas() {
+        try { citas = (await api('listarCitas')).citas; } catch (e) { return; }
+        pintarCitas();
+    }
+
+    function pintarCitas() {
+        const hoy = new Date();
+        const hoyTexto = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+        const profesional = $('citasProfesional').value;
+        const proximas = $('citasMostrar').value === 'proximas';
+
+        const lista = citas
+            .filter(c => !profesional || c.profesional === profesional)
+            .filter(c => !proximas || (c.fecha >= hoyTexto && c.estado === 'confirmada'))
+            .sort((a, b) => proximas
+                ? (a.fecha.localeCompare(b.fecha) || aMinutos(a.hora) - aMinutos(b.hora))
+                : (b.fecha.localeCompare(a.fecha) || aMinutos(b.hora) - aMinutos(a.hora)));
+
+        if (!lista.length) {
+            $('listaCitas').innerHTML = `<p class="panel-vacio">No hay citas ${proximas ? 'próximas' : 'registradas'}.</p>`;
+            return;
+        }
+
+        $('listaCitas').innerHTML = lista.map(c => {
+            const telefono = String(c.telefono).replace(/\D/g, '');
+            return `
+            <article class="panel-item" data-id="${esc(c.id)}">
+                <div class="panel-item-info">
+                    <h3>${esc(fechaLarga(c.fecha))} · ${esc(c.hora)}
+                        <span class="panel-badge ${c.estado === 'confirmada' ? 'ok' : c.estado === 'atendida' ? 'azul' : 'gris'}">${esc(c.estado)}</span></h3>
+                    <p><strong>${esc(c.nombre)}</strong> con ${esc(c.profesional)} · ${esc(c.duracion)} min</p>
+                    <p>${esc(c.servicios)}</p>
+                    <p>📞 ${esc(c.telefono)} · ✉️ ${esc(c.correo)}</p>
+                    ${c.mensaje ? `<p class="panel-mensaje">💭 ${esc(c.mensaje)}</p>` : ''}
+                </div>
+                <div class="panel-item-acciones">
+                    ${telefono ? `<a class="panel-btn" target="_blank" rel="noopener" href="https://wa.me/${telefono}">📱 WhatsApp</a>` : ''}
+                    ${c.estado === 'confirmada' ? `
+                        <button type="button" class="panel-btn" data-estado="atendida">✓ Atendida</button>
+                        <button type="button" class="panel-btn panel-btn-peligro" data-estado="cancelada">✕ Cancelar</button>` : `
+                        <button type="button" class="panel-btn" data-estado="confirmada">↺ Reactivar</button>`}
+                </div>
+            </article>`;
+        }).join('');
+
+        $('listaCitas').querySelectorAll('button[data-estado]').forEach(b => b.addEventListener('click', async () => {
+            const id = b.closest('.panel-item').dataset.id;
+            if (b.dataset.estado === 'cancelada' && !confirm('¿Cancelar esta cita? La hora quedará libre para otra persona.')) return;
+            try { await api('cambiarEstadoCita', { id, estado: b.dataset.estado }); await cargarCitas(); }
+            catch (e) { /* mensaje mostrado */ }
+        }));
+    }
+
+    // ========== DISPONIBILIDAD ==========
+    let disponibilidad = [];
+    $('dispProfesional').innerHTML = PROFESIONALES.map(p => `<option>${esc(p)}</option>`).join('');
+    $('bloqueoProfesional').innerHTML = '<option>Todos</option>' + PROFESIONALES.map(p => `<option>${esc(p)}</option>`).join('');
+    $('dispProfesional').addEventListener('change', pintarHorario);
+
+    async function cargarDisponibilidad() {
+        let r;
+        try { r = await api('leerDisponibilidad'); } catch (e) { return; }
+        disponibilidad = r.disponibilidad;
+        pintarHorario();
+        pintarBloqueos(r.bloqueos);
+    }
+
+    function pintarHorario() {
+        const profesional = $('dispProfesional').value;
+        const filas = disponibilidad.filter(d => d.profesional === profesional);
+        const configurado = filas.length > 0;
+        const horasDe = dia => {
+            const fila = filas.find(f => String(f.dia) === String(dia));
+            if (!configurado) return dia === 0 ? [] : HORAS_CITA;   // por defecto: lunes a sábado, todas las horas
+            return fila ? fila.horas.split(',').filter(Boolean) : [];
+        };
+        const dias = [1, 2, 3, 4, 5, 6, 0];
+
+        let html = '<thead><tr><th>Hora</th>' + dias.map(d =>
+            `<th><button type="button" class="panel-dia" data-dia="${d}" title="Marcar o desmarcar todo el día">${DIAS[d].slice(0, 3)}</button></th>`).join('') + '</tr></thead><tbody>';
+        HORAS_CITA.forEach(hora => {
+            html += `<tr><th scope="row">${hora}</th>` + dias.map(d =>
+                `<td><input type="checkbox" data-dia="${d}" value="${hora}" ${horasDe(d).includes(hora) ? 'checked' : ''} aria-label="${DIAS[d]} ${hora}"></td>`).join('') + '</tr>';
+        });
+        $('gridHorario').innerHTML = html + '</tbody>';
+        $('gridHorario').querySelectorAll('.panel-dia').forEach(b => b.addEventListener('click', () => {
+            const casillas = [...$('gridHorario').querySelectorAll(`input[data-dia="${b.dataset.dia}"]`)];
+            const marcar = casillas.some(c => !c.checked);
+            casillas.forEach(c => { c.checked = marcar; });
+        }));
+        if (!configurado) estado('ℹ️ Este profesional aún no tiene horario guardado: se muestra el horario por defecto (lunes a sábado).');
+    }
+
+    $('dispGuardar').addEventListener('click', async () => {
+        const dias = {};
+        [0, 1, 2, 3, 4, 5, 6].forEach(d => {
+            dias[d] = [...$('gridHorario').querySelectorAll(`input[data-dia="${d}"]:checked`)].map(c => c.value);
+        });
+        try {
+            await api('guardarDisponibilidad', { profesional: $('dispProfesional').value, dias });
+            await cargarDisponibilidad();
+            estado('✓ Horario guardado.', 'ok');
+        } catch (e) { /* mensaje mostrado */ }
+    });
+
+    function pintarBloqueos(bloqueos) {
+        const lista = bloqueos.slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
+        $('listaBloqueos').innerHTML = lista.length ? lista.map(b => `
+            <div class="panel-item panel-item-compacto" data-id="${esc(b.id)}">
+                <span><strong>${esc(fechaLarga(b.fecha))}</strong> · ${esc(b.profesional)}${b.motivo ? ' · ' + esc(b.motivo) : ''}</span>
+                <button type="button" class="panel-btn panel-btn-peligro">Quitar</button>
+            </div>`).join('') : '<p class="panel-vacio">No hay días bloqueados.</p>';
+        $('listaBloqueos').querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+            try { await api('eliminarBloqueo', { id: b.closest('.panel-item').dataset.id }); cargarDisponibilidad(); }
+            catch (e) { /* mensaje mostrado */ }
+        }));
+    }
+
+    $('formBloqueo').addEventListener('submit', async e => {
+        e.preventDefault();
+        try {
+            await api('agregarBloqueo', { fecha: $('bloqueoFecha').value, profesional: $('bloqueoProfesional').value, motivo: $('bloqueoMotivo').value });
+            $('formBloqueo').reset();
+            await cargarDisponibilidad();
+            estado('✓ Día bloqueado.', 'ok');
+        } catch (err) { /* mensaje mostrado */ }
+    });
+
+    // Si ya había iniciado sesión en esta pestaña, entrar directo
+    if (clave && apiActiva()) entrar();
 })();

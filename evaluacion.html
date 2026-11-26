@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Evaluación anónima de bienestar laboral.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Evaluación de Bienestar Laboral | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-prueba pg-evaluacion">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="organizaciones.html">Organizaciones</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <p class="prueba-categoria">Evaluación de bienestar laboral</p>
+            <h1 id="evalTitulo">Cargando evaluación...</h1>
+            <p class="subtitle" id="evalSubtitulo"></p>
+
+            <div class="aviso-prueba" id="evalMensaje" role="alert" hidden></div>
+
+            <!-- Paso 1: presentación -->
+            <section id="pasoInicio" hidden>
+                <div class="aviso-prueba">
+                    <strong>🔒 Tus respuestas son anónimas.</strong> No te pedimos nombre, cédula ni correo.
+                    La empresa <strong>solo recibe resultados agrupados</strong> de todo el personal y nunca
+                    puede ver lo que respondió cada persona. Responde con sinceridad: no hay respuestas
+                    buenas ni malas.
+                </div>
+
+                <div class="patient-info-section" id="grupoArea" hidden>
+                    <h3>¿En qué área trabajas?</h3>
+                    <div class="form-group">
+                        <label for="evalArea">Área o dependencia:</label>
+                        <select id="evalArea"></select>
+                    </div>
+                </div>
+
+                <label class="consentimiento">
+                    <input type="checkbox" id="evalConsentimiento">
+                    <span>Acepto participar de forma voluntaria y anónima. Entiendo que mis respuestas se usarán
+                    solo de forma agrupada para mejorar el bienestar laboral, según la Ley 1581 de 2012.</span>
+                </label>
+
+                <p class="nota-envio" id="evalYaRespondio" hidden>
+                    Ya se envió una evaluación desde este dispositivo. Si eres otra persona, puedes continuar.
+                </p>
+
+                <button type="button" id="evalComenzar" class="send-button" disabled>Comenzar</button>
+            </section>
+
+            <!-- Paso 2: cada prueba -->
+            <section id="pasoPrueba" hidden>
+                <div class="progress-section">
+                    <p class="progress-text" id="evalProgresoTexto"></p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="evalProgreso"></div>
+                    </div>
+                </div>
+                <h2 class="eval-prueba-titulo" id="evalPruebaTitulo"></h2>
+                <p class="subtitle" id="evalInstrucciones"></p>
+                <div id="evalPreguntas" class="questions-container"></div>
+                <button type="button" id="evalSiguiente" class="send-button" disabled>Siguiente</button>
+                <p class="send-message" id="evalFaltan"></p>
+            </section>
+
+            <!-- Paso 3: final -->
+            <section id="pasoFin" hidden>
+                <div class="eval-gracias">
+                    <span class="eval-gracias-icono">💚</span>
+                    <h2>¡Gracias por participar!</h2>
+                    <p>Tus respuestas se enviaron de forma anónima. Con la información de todo el equipo
+                    se preparará un informe para mejorar el bienestar en tu lugar de trabajo.</p>
+                </div>
+
+                <div class="alerta-crisis" id="evalCrisis" role="alert" hidden>
+                    <h3>No estás solo(a). Pide ayuda ahora.</h3>
+                    <p>Marcaste que has tenido pensamientos de hacerte daño. Como tus respuestas son anónimas,
+                    nadie podrá contactarte por ellas, así que te pedimos que busques ayuda hoy mismo,
+                    de forma gratuita y confidencial:</p>
+                    <ul>
+                        <li><strong>Línea 192, opción 4</strong>: atención en salud mental (todo el país)</li>
+                        <li><strong>Línea 106</strong>: apoyo emocional</li>
+                        <li><strong>Línea 123</strong>: emergencias, si estás en peligro inmediato</li>
+                    </ul>
+                    <p>También puedes escribirnos por <a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a>.</p>
+                </div>
+
+                <p class="eval-apoyo">Si quieres hablar con un profesional de forma privada, puedes
+                <a href="Agendas.html">agendar una cita</a> o escribirnos por WhatsApp.</p>
+
+                <button type="button" id="evalOtra" class="send-button eval-secundario">Responder otra persona en este dispositivo</button>
+            </section>
+
+            <div class="lineas-ayuda">
+                <strong>¿Necesitas ayuda urgente?</strong> Línea 192 opción 4 · Línea 106 · Emergencias 123
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/config.js"></script>
+    <script src="JS/pruebas-datos.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>

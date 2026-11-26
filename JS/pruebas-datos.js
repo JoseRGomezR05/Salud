@@ -880,3 +880,121 @@ const DIBUJOS = {
         ]
     }
 };
+
+// ============================================================
+// CALIFICACIÓN (usada por la evaluación de empresas y el panel)
+// ============================================================
+function opcionesDePregunta(prueba, pregunta) {
+    return pregunta.opciones || prueba.opciones;
+}
+
+// Puntaje de una pregunta según el índice de la opción elegida
+function puntajePregunta(prueba, indicePregunta, indiceOpcion) {
+    const pregunta = prueba.preguntas[indicePregunta];
+    const opciones = opcionesDePregunta(prueba, pregunta);
+    const valor = opciones[indiceOpcion].valor;
+    if (!pregunta.invertida) return valor;
+    const valores = opciones.map(o => o.valor);
+    return Math.max(...valores) + Math.min(...valores) - valor;
+}
+
+// elegidas: lista con el índice de la opción elegida en cada pregunta
+function calificarPrueba(prueba, elegidas) {
+    let total = 0;
+    elegidas.forEach((opcion, i) => { total += puntajePregunta(prueba, i, opcion); });
+    if (prueba.puntuar) total = prueba.puntuar(total);
+    const rango = prueba.rangos.find(r => total <= r.hasta) || prueba.rangos[prueba.rangos.length - 1];
+    return { total, nivel: rango.nivel, texto: rango.texto };
+}
+
+// Puntaje mínimo y máximo posibles de una prueba
+function rangoPuntaje(prueba) {
+    let min = 0, max = 0;
+    prueba.preguntas.forEach(p => {
+        const valores = opcionesDePregunta(prueba, p).map(o => o.valor);
+        min += Math.min(...valores);
+        max += Math.max(...valores);
+    });
+    if (prueba.puntuar) { min = prueba.puntuar(min); max = prueba.puntuar(max); }
+    return { min, max };
+}
+
+// ============================================================
+// PLANES PARA ORGANIZACIONES (organizaciones.html y panel.html)
+// ============================================================
+// Qué mide cada prueba (texto para las empresas)
+const DESCRIPCIONES_ORG = {
+    cbi: 'Agotamiento físico y emocional relacionado con el trabajo.',
+    satisfaccionLaboral: 'Satisfacción con 15 aspectos del trabajo: salario, jefe, compañeros, horario, estabilidad y más.',
+    climaLaboral: 'Respeto, comunicación, justicia, recursos y sentido de pertenencia.',
+    estresLaboral: 'Carga de trabajo, claridad de funciones, control, reconocimiento y presión por plazos.',
+    desgasteLaboral: 'Señales de burnout: agotamiento, distanciamiento y pérdida de sentido del trabajo.',
+    trabajoEquipo: 'Objetivos, roles, confianza, cooperación y manejo de diferencias en el equipo.',
+    liderazgo: 'Cómo perciben los trabajadores a sus jefes directos.',
+    balanceVidaTrabajo: 'Conflicto entre las exigencias del trabajo y la vida personal y familiar.',
+    k10: 'Nivel general de malestar psicológico (nerviosismo, tristeza, desesperanza).',
+    gad7: 'Síntomas de ansiedad en las últimas 2 semanas.',
+    phq9: 'Síntomas depresivos en las últimas 2 semanas.'
+};
+
+const PLANES_ORG = {
+    pequena: {
+        nombre: 'Pequeña empresa',
+        descripcion: 'Una evaluación corta y económica para empresas de 1 a 50 trabajadores. ' +
+            'Mide lo esencial (agotamiento, clima y estrés) y entrega recomendaciones fáciles de aplicar. ' +
+            'En equipos de menos de 10 personas los resultados se presentan solo de forma general, para proteger el anonimato.',
+        pruebas: ['cbi', 'climaLaboral', 'estresLaboral'],
+        opcionales: [],
+        servicios: [
+            'Reunión inicial virtual con el dueño o gerente.',
+            'Aplicación anónima en línea o en papel.',
+            'Análisis de resultados del equipo.',
+            'Una charla de 1 hora sobre manejo del estrés.'
+        ],
+        entregables: [
+            'Informe resumido de bienestar laboral.',
+            'De 3 a 5 recomendaciones prácticas y de bajo costo.'
+        ]
+    },
+    mediana: {
+        nombre: 'Mediana empresa',
+        descripcion: 'Un diagnóstico completo y ágil del bienestar laboral, pensado para empresas de 51 a 200 trabajadores. ' +
+            'Identifica los principales factores de riesgo y entrega recomendaciones prácticas para la dirección.',
+        pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'trabajoEquipo'],
+        opcionales: [],
+        servicios: [
+            'Reunión inicial con la gerencia o Talento Humano.',
+            'Aplicación anónima en línea o en papel.',
+            'Análisis de resultados de toda la empresa.',
+            'Un taller grupal (manejo del estrés o comunicación asertiva).',
+            'Socialización de resultados con la dirección.'
+        ],
+        entregables: [
+            'Informe general de bienestar laboral.',
+            'Mapa de los principales factores de riesgo y fortalezas.',
+            'Recomendaciones priorizadas de intervención.'
+        ]
+    },
+    grande: {
+        nombre: 'Gran empresa',
+        descripcion: 'Un programa integral para organizaciones de más de 200 trabajadores, con resultados por área o sede, ' +
+            'plan de intervención y medición de seguimiento para ver el impacto de las acciones.',
+        pruebas: ['cbi', 'satisfaccionLaboral', 'climaLaboral', 'estresLaboral', 'desgasteLaboral',
+            'trabajoEquipo', 'liderazgo', 'balanceVidaTrabajo'],
+        opcionales: ['k10', 'gad7', 'phq9'],
+        servicios: [
+            'Reuniones de planeación con gerencia, Talento Humano y SST.',
+            'Aplicación anónima en línea o en papel, por áreas o sedes.',
+            'Análisis comparativo entre áreas, sedes y cargos.',
+            'Ciclo de 3 talleres (estrés, liderazgo y trabajo en equipo).',
+            'Espacios de escucha y orientación para trabajadores que lo soliciten.',
+            'Nueva medición a los 6 meses para comparar resultados.'
+        ],
+        entregables: [
+            'Informe general y un informe por cada área o sede.',
+            'Tablero de indicadores de bienestar laboral.',
+            'Plan de intervención con responsables y fechas.',
+            'Informe de seguimiento con la comparación antes y después.'
+        ]
+    }
+};
