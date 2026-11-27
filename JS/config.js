@@ -6,7 +6,7 @@
 // Mientras esté vacía, la agenda funciona como antes (todas las horas
 // disponibles) y las evaluaciones de empresas no se pueden usar.
 // Ver apps-script/INSTRUCCIONES.md.
-const API_URL = '';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxQw_CVKT1_ymMXNGmRE5aYD1ouEhG9d7wmjQdwunilK-CKcDGvlYmpnenHLTQzrVqE/exec';
 
 // Dirección pública del sitio (GitHub Pages). Se usa para armar los
 // enlaces de evaluación que se envían a las empresas.
