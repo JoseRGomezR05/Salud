@@ -27,6 +27,22 @@ const PROFESIONALES = [
     'Laura Torregrosa Sanjuanelo'
 ];
 
+// Políticas e indicaciones que el paciente acepta al reservar.
+// Deben ser iguales a POLITICAS e INDICACIONES de apps-script/Codigo.gs
+// (allí se usan para el comprobante en PDF y los correos).
+const POLITICAS = [
+    'El pago se realiza antes de la cita. Si a las 12 horas antes de la cita no se ha recibido el pago, la cita se da por cancelada.',
+    'Puedes cancelar o cambiar tu cita sin costo hasta 12 horas antes.',
+    'Si cancelas con menos de 12 horas de anticipación o el mismo día, se cobra una penalización del 50 % del valor de la atención.',
+    'Si no asistes a la cita sin avisar, no hay devolución del pago.'
+];
+const INDICACIONES = [
+    'Llega 15 minutos antes de la hora de tu cita.',
+    'Si tu cita es virtual, te enviaremos el enlace de la videollamada por WhatsApp. Conéctate desde un lugar tranquilo y privado.',
+    'Tu reserva queda pendiente hasta que el profesional la acepte. Te avisaremos por correo.',
+    'Envía el comprobante de pago por WhatsApp al 300 480 4521.'
+];
+
 // En los informes de empresas, un área con menos personas que este
 // número no se muestra por separado, para proteger el anonimato.
 const MINIMO_POR_AREA = 5;

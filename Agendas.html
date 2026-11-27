@@ -156,6 +156,15 @@
                     <div class="total-price-container">
                         <div id="total-price">Total: $0</div>
                     </div>
+                    <div class="politicas-reserva">
+                        <h3>Indicaciones y políticas</h3>
+                        <ul id="listaIndicaciones"></ul>
+                        <ul id="listaPoliticas" class="politicas-lista"></ul>
+                        <label class="politicas-check">
+                            <input type="checkbox" id="aceptaPoliticas">
+                            <span>He leído y acepto las políticas de pago y cancelación.</span>
+                        </label>
+                    </div>
                     <button type="submit" id="submitButton" disabled>Reservar Cita</button>
                 </form>
             </div>
@@ -185,8 +194,16 @@
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h2>¡Gracias por agendar tu cita!</h2>
+            <h2 id="modalTitulo">¡Gracias por agendar tu cita!</h2>
             <p id="modalResumen">Recuerda asistir 15 minutos antes a tu cita.</p>
+            <div class="modal-cita" id="modalComprobante" hidden>
+                <p class="modal-cita-texto" id="modalEstado"></p>
+                <div class="modal-cita-botones">
+                    <button type="button" id="modalPdf" class="modal-cita-btn modal-cita-principal">📄 Descargar comprobante (PDF)</button>
+                    <a href="pagos2.html" class="modal-cita-btn" target="_blank" rel="noopener">💳 Ver medios de pago</a>
+                </div>
+                <p class="modal-cita-texto modal-cita-error" id="modalPdfError" hidden></p>
+            </div>
             <div class="modal-cita" id="modalCita" hidden>
                 <p class="modal-cita-texto">Guarda tu cita en el calendario para no olvidarla:</p>
                 <div class="modal-cita-botones">

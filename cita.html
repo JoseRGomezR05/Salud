@@ -44,16 +44,24 @@
             <!-- Detalle de la cita -->
             <section id="citaDetalle" hidden>
                 <dl class="cita-resumen">
+                    <div><dt>🧾 N.º de reserva</dt><dd id="citaNumero"></dd></div>
                     <div><dt>📅 Fecha</dt><dd id="citaFecha"></dd></div>
                     <div><dt>⏰ Hora</dt><dd id="citaHora"></dd></div>
                     <div><dt>👤 Profesional</dt><dd id="citaProfesional"></dd></div>
                     <div><dt>🩺 Servicio</dt><dd id="citaServicios"></dd></div>
+                    <div><dt>💰 Total</dt><dd id="citaTotal"></dd></div>
+                    <div><dt>💳 Pago</dt><dd id="citaPago"></dd></div>
                     <div><dt>Estado</dt><dd><span class="cita-estado" id="citaEstado"></span></dd></div>
                 </dl>
+                <p class="cita-info" id="citaInfo" hidden></p>
 
                 <div class="cita-acciones" id="citaCalendario">
                     <a id="citaGoogle" class="cita-btn" target="_blank" rel="noopener">📅 Agregar a Google Calendar</a>
                     <button type="button" id="citaIcs" class="cita-btn">📲 Calendario del celular</button>
+                </div>
+                <div class="cita-acciones">
+                    <button type="button" id="citaPdf" class="cita-btn">📄 Descargar comprobante (PDF)</button>
+                    <a href="pagos2.html" class="cita-btn">💳 Medios de pago</a>
                 </div>
 
                 <div class="cita-acciones" id="citaGestion" hidden>
@@ -61,6 +69,10 @@
                     <button type="button" id="citaCancelar" class="cita-btn cita-btn-peligro">✕ Cancelar mi cita</button>
                 </div>
                 <p class="cita-nota" id="citaNota"></p>
+                <details class="cita-politicas">
+                    <summary>Políticas de pago y cancelación</summary>
+                    <ul id="citaPoliticas"></ul>
+                </details>
             </section>
 
             <!-- Cambiar la cita -->

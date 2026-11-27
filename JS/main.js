@@ -135,6 +135,31 @@ function descargarICS(cita, detalle = '') {
     setTimeout(() => URL.revokeObjectURL(enlace.href), 5000);
 }
 
+// Descarga el comprobante de reserva en PDF que genera Google Apps Script
+async function descargarComprobante(id, token) {
+    const r = await llamarAPI('comprobante', { id, token });
+    if (!r.ok) throw new Error(r.error || 'No se pudo generar el comprobante.');
+    const binario = atob(r.base64);
+    const bytes = new Uint8Array(binario.length);
+    for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+    const enlace = document.createElement('a');
+    enlace.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    enlace.download = r.nombre || 'comprobante.pdf';
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(() => URL.revokeObjectURL(enlace.href), 10000);
+}
+
+const ESTADOS_CITA = {
+    pendiente: 'Pendiente de aceptación', confirmada: 'Confirmada', atendida: 'Atendida',
+    cancelada: 'Cancelada', rechazada: 'Rechazada'
+};
+
+function pesosCOP(n) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(n) || 0);
+}
+
 // Texto de por qué una hora no está disponible
 const MOTIVOS_HORA = { ocupada: 'ocupada', 'no alcanza': 'no alcanza', 'no disponible': 'no disponible', 'ya pasó': 'ya pasó' };
 
@@ -348,7 +373,9 @@ if (pagina('agendas')) (function () {
         const isServiceSelected = selectedServices.size > 0;
         const isProfessionalSelected = selectedProfessional !== null;
 
-        submitButton.disabled = !(isDateSelected && isTimeSelected && isServiceSelected && isProfessionalSelected);
+        const aceptaPoliticas = document.getElementById('aceptaPoliticas');
+        const politicasOk = !aceptaPoliticas || aceptaPoliticas.checked;
+        submitButton.disabled = !(isDateSelected && isTimeSelected && isServiceSelected && isProfessionalSelected && politicasOk);
 
         // Cambiar estilo visual según estado
         if (submitButton.disabled) {
@@ -398,7 +425,7 @@ if (pagina('agendas')) (function () {
     }
 
     // Función para generar mensaje de WhatsApp
-    function generateWhatsAppMessage(formData) {
+    function generateWhatsAppMessage(formData, numero = '') {
         const totalPrice = calculateTotalPrice();
         const formattedPrice = new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -407,6 +434,7 @@ if (pagina('agendas')) (function () {
 
         return encodeURIComponent(
             `🔵 *Nueva Reserva de Cita*\n\n` +
+            (numero ? `🧾 *Reserva N.º:* ${numero}\n⏳ *Estado:* pendiente de aceptación\n\n` : '') +
             `👨‍⚕️ *Profesional:* ${selectedProfessional}\n` +
             `👤 *Nombre:* ${formData.name}\n` +
             `📞 *Teléfono:* ${formData.phone}\n` +
@@ -415,7 +443,8 @@ if (pagina('agendas')) (function () {
             `⏰ *Hora:* ${formData.time}\n` +
             `🏥 *Servicios Seleccionados:*\n• ${getSelectedServicesText()}\n` +
             `💰 *Precio Total:* ${formattedPrice}\n` +
-            `💭 *Mensaje:* ${formData.message || 'No se incluyó mensaje adicional'}`
+            `💭 *Mensaje:* ${formData.message || 'No se incluyó mensaje adicional'}\n\n` +
+            `✅ Acepto las políticas de pago y cancelación.`
         );
     }
 
@@ -476,8 +505,9 @@ if (pagina('agendas')) (function () {
         };
 
         // Generar mensaje y URL de WhatsApp
-        const message = generateWhatsAppMessage(formData);
-        const whatsappUrl = `https://wa.me/${selectedProfessionalPhone}?text=${message}`;
+        const telefonoProfesional = selectedProfessionalPhone;
+        const urlWhatsApp = numero => `https://wa.me/${telefonoProfesional}?text=${generateWhatsAppMessage(formData, numero)}`;
+        const whatsappUrl = urlWhatsApp('');
 
         const citaReservada = {
             fecha: formData.date,
@@ -501,6 +531,23 @@ if (pagina('agendas')) (function () {
             document.getElementById('modalIcs').onclick = () => descargarICS(citaReservada, detalle);
             document.getElementById('modalGestion').hidden = !enlaceGestion;
             document.getElementById('modalEnlace').href = enlaceGestion || '#';
+
+            const conComprobante = !!(respuesta && respuesta.token);
+            document.getElementById('modalTitulo').textContent = conComprobante ? '¡Solicitud de cita enviada!' : '¡Gracias por agendar tu cita!';
+            document.getElementById('modalComprobante').hidden = !conComprobante;
+            document.getElementById('modalPdfError').hidden = true;
+            if (conComprobante) {
+                document.getElementById('modalEstado').textContent =
+                    `Reserva N.º ${respuesta.numero} · pendiente de aceptación. Te avisaremos por correo cuando el profesional la confirme. ` +
+                    'Recuerda realizar el pago antes de 12 horas de tu cita; si no, se da por cancelada.';
+                const pedirPdf = () => descargarComprobante(respuesta.id, respuesta.token).catch(() => {
+                    const aviso = document.getElementById('modalPdfError');
+                    aviso.textContent = 'No se pudo descargar el comprobante ahora. También te llegó por correo.';
+                    aviso.hidden = false;
+                });
+                document.getElementById('modalPdf').onclick = pedirPdf;
+                pedirPdf();
+            }
             showModal();
             appointmentForm.reset();
             serviceCards.forEach(card => card.classList.remove('selected'));
@@ -544,8 +591,8 @@ if (pagina('agendas')) (function () {
                 if (r.ocupado) checkTimeAvailability();
                 return;
             }
-            if (ventana) ventana.location.href = whatsappUrl;
-            else window.open(whatsappUrl, '_blank');
+            if (ventana) ventana.location.href = urlWhatsApp(r.numero);
+            else window.open(urlWhatsApp(r.numero), '_blank');
             finalizarReserva(r);
         }).catch(() => {
             // Si la base de datos no responde, la cita igual se envía por WhatsApp
@@ -761,6 +808,12 @@ if (pagina('agendas')) (function () {
         if (localStorage.getItem('appointment_phone')) {
             phoneInput.value = localStorage.getItem('appointment_phone');
         }
+    }
+
+    // Mostrar indicaciones y políticas (JS/config.js)
+    if (typeof POLITICAS !== 'undefined') {
+        document.getElementById('listaIndicaciones').innerHTML = INDICACIONES.map(t => `<li>${esc(t)}</li>`).join('');
+        document.getElementById('listaPoliticas').innerHTML = POLITICAS.map(t => `<li>${esc(t)}</li>`).join('');
     }
 
     // Inicializar todas las funcionalidades al cargar la página
@@ -1400,7 +1453,7 @@ if (pagina('pagos')) (function () {
 // PRUEBA PSICOLÓGICA (prueba.html?p=<clave>)
 // ============================================================
 // Las preguntas de cada prueba están en JS/pruebas-datos.js.
-if (pagina('prueba') && !pagina('dibujo') && !pagina('evaluacion') && !pagina('cita')) (function () {
+if (pagina('prueba') && !pagina('dibujo') && !pagina('evaluacion') && !pagina('cita') && !pagina('responder')) (function () {
     const clave = new URLSearchParams(location.search).get('p');
     const prueba = (typeof PRUEBAS !== 'undefined' && Object.prototype.hasOwnProperty.call(PRUEBAS, clave))
         ? PRUEBAS[clave] : null;
@@ -2578,7 +2631,7 @@ if (pagina('panel')) (function () {
 
         const lista = citas
             .filter(c => !profesional || c.profesional === profesional)
-            .filter(c => !proximas || (c.fecha >= hoyTexto && c.estado === 'confirmada'))
+            .filter(c => !proximas || (c.fecha >= hoyTexto && (c.estado === 'confirmada' || c.estado === 'pendiente')))
             .sort((a, b) => proximas
                 ? (a.fecha.localeCompare(b.fecha) || aMinutos(a.hora) - aMinutos(b.hora))
                 : (b.fecha.localeCompare(a.fecha) || aMinutos(b.hora) - aMinutos(a.hora)));
@@ -2588,33 +2641,71 @@ if (pagina('panel')) (function () {
             return;
         }
 
-        $('listaCitas').innerHTML = lista.map(c => {
+        const porAceptar = citas.filter(c => c.estado === 'pendiente' && c.fecha >= hoyTexto).length;
+        $('listaCitas').innerHTML = (porAceptar ? `<p class="panel-alerta">⏳ Tienes <strong>${porAceptar}</strong> cita${porAceptar > 1 ? 's' : ''} por aceptar o rechazar.</p>` : '') +
+            lista.map(c => {
             const telefono = String(c.telefono).replace(/\D/g, '');
+            const clase = { pendiente: 'leve', confirmada: 'ok', atendida: 'azul' }[c.estado] || 'gris';
+            const activa = c.estado === 'pendiente' || c.estado === 'confirmada';
+            const textoWhatsApp = c.estado === 'confirmada'
+                ? `Hola ${c.nombre.split(' ')[0]}, te confirmamos tu cita N.º ${c.numero || c.id} el ${fechaLarga(c.fecha)} a las ${c.hora} con ${c.profesional}. ` +
+                  (c.pago === 'pagado' ? '¡Te esperamos!' : `Recuerda realizar el pago de ${pesosCOP(c.valor)} antes de 12 horas de la cita y enviarnos el comprobante.`)
+                : c.estado === 'rechazada'
+                ? `Hola ${c.nombre.split(' ')[0]}, lamentamos no poder atenderte el ${fechaLarga(c.fecha)} a las ${c.hora}. ¿Te gustaría elegir otro horario?`
+                : `Hola ${c.nombre.split(' ')[0]}, te escribimos de Bienestar Emocional por tu cita N.º ${c.numero || c.id}.`;
             return `
             <article class="panel-item" data-id="${esc(c.id)}">
                 <div class="panel-item-info">
                     <h3>${esc(fechaLarga(c.fecha))} · ${esc(c.hora)}
-                        <span class="panel-badge ${c.estado === 'confirmada' ? 'ok' : c.estado === 'atendida' ? 'azul' : 'gris'}">${esc(c.estado)}</span></h3>
-                    <p><strong>${esc(c.nombre)}</strong> con ${esc(c.profesional)} · ${esc(c.duracion)} min</p>
-                    <p>${esc(c.servicios)}</p>
+                        <span class="panel-badge ${clase}">${esc(ESTADOS_CITA[c.estado] || c.estado)}</span>
+                        ${activa || c.pago === 'pagado' ? `<span class="panel-badge ${c.pago === 'pagado' ? 'ok' : 'alto'}">${c.pago === 'pagado' ? '💳 Pagada' : '💳 Sin pago'}</span>` : ''}</h3>
+                    <p><strong>${esc(c.nombre)}</strong> con ${esc(c.profesional)} · ${esc(c.duracion)} min${c.numero ? ' · N.º ' + esc(c.numero) : ''}</p>
+                    <p>${esc(c.servicios)}${Number(c.valor) ? ' · <strong>' + pesosCOP(c.valor) + '</strong>' : ''}</p>
                     <p>📞 ${esc(c.telefono)} · ✉️ ${esc(c.correo)}</p>
                     ${c.mensaje ? `<p class="panel-mensaje">💭 ${esc(c.mensaje)}</p>` : ''}
+                    ${c.nota ? `<p class="panel-mensaje">📝 ${esc(c.nota)}</p>` : ''}
+                    ${Number(c.penalizacion) ? `<p><strong>Penalización:</strong> ${pesosCOP(c.penalizacion)}</p>` : ''}
                 </div>
                 <div class="panel-item-acciones">
-                    ${telefono ? `<a class="panel-btn" target="_blank" rel="noopener" href="https://wa.me/${telefono}">📱 WhatsApp</a>` : ''}
+                    ${c.estado === 'pendiente' ? `
+                        <button type="button" class="panel-btn panel-btn-principal" data-responder="aceptar">✅ Aceptar</button>
+                        <button type="button" class="panel-btn panel-btn-peligro" data-responder="rechazar">❌ Rechazar</button>` : ''}
+                    ${telefono ? `<a class="panel-btn" target="_blank" rel="noopener" href="https://wa.me/${telefono}?text=${encodeURIComponent(textoWhatsApp)}">📱 WhatsApp</a>` : ''}
+                    ${activa ? `<button type="button" class="panel-btn" data-pago="${c.pago === 'pagado' ? 'pendiente' : 'pagado'}">${c.pago === 'pagado' ? '↺ Quitar pago' : '💳 Marcar pagada'}</button>` : ''}
                     ${c.estado === 'confirmada' ? `
                         <button type="button" class="panel-btn" data-estado="atendida">✓ Atendida</button>
-                        <button type="button" class="panel-btn panel-btn-peligro" data-estado="cancelada">✕ Cancelar</button>` : `
-                        <button type="button" class="panel-btn" data-estado="confirmada">↺ Reactivar</button>`}
+                        <button type="button" class="panel-btn panel-btn-peligro" data-estado="cancelada">✕ Cancelar</button>` : ''}
+                    ${!activa ? `<button type="button" class="panel-btn" data-estado="confirmada">↺ Reactivar</button>` : ''}
                 </div>
             </article>`;
         }).join('');
 
+        const idDe = b => b.closest('.panel-item').dataset.id;
         $('listaCitas').querySelectorAll('button[data-estado]').forEach(b => b.addEventListener('click', async () => {
-            const id = b.closest('.panel-item').dataset.id;
             if (b.dataset.estado === 'cancelada' && !confirm('¿Cancelar esta cita? La hora quedará libre para otra persona.')) return;
-            try { await api('cambiarEstadoCita', { id, estado: b.dataset.estado }); await cargarCitas(); }
+            try { await api('cambiarEstadoCita', { id: idDe(b), estado: b.dataset.estado }); await cargarCitas(); }
             catch (e) { /* mensaje mostrado */ }
+        }));
+        $('listaCitas').querySelectorAll('button[data-responder]').forEach(b => b.addEventListener('click', async () => {
+            let motivo = '';
+            if (b.dataset.responder === 'rechazar') {
+                motivo = prompt('¿Por qué rechazas la cita? (opcional, se le enviará al paciente)');
+                if (motivo === null) return;
+            }
+            try {
+                await api('responderCitaPanel', { id: idDe(b), decision: b.dataset.responder, motivo });
+                await cargarCitas();
+                estado(b.dataset.responder === 'aceptar'
+                    ? '✓ Cita aceptada. Se le envió un correo al paciente; también puedes avisarle por WhatsApp.'
+                    : '✓ Cita rechazada. Se le envió un correo al paciente y la hora quedó libre.', 'ok');
+            } catch (e) { /* mensaje mostrado */ }
+        }));
+        $('listaCitas').querySelectorAll('button[data-pago]').forEach(b => b.addEventListener('click', async () => {
+            try {
+                await api('marcarPago', { id: idDe(b), pago: b.dataset.pago });
+                await cargarCitas();
+                estado(b.dataset.pago === 'pagado' ? '✓ Pago registrado. Se le envió un correo al paciente.' : '✓ Pago quitado.', 'ok');
+            } catch (e) { /* mensaje mostrado */ }
         }));
     }
 
@@ -2737,20 +2828,27 @@ if (pagina('panel')) (function () {
         $('resTitulo').textContent = `${resLunes.toLocaleDateString('es-CO', opciones)} – ${domingo.toLocaleDateString('es-CO', opciones)} ${domingo.getFullYear()}`;
 
         const semana = citas.filter(c => c.fecha >= desde && c.fecha <= hasta);
-        const activas = semana.filter(c => c.estado !== 'cancelada');
+        const activas = semana.filter(c => c.estado !== 'cancelada' && c.estado !== 'rechazada');
         const atendidas = semana.filter(c => c.estado === 'atendida');
+        const porAceptar = semana.filter(c => c.estado === 'pendiente');
         const pendientes = semana.filter(c => c.estado === 'confirmada');
-        const canceladas = semana.filter(c => c.estado === 'cancelada');
+        const canceladas = semana.filter(c => c.estado === 'cancelada' || c.estado === 'rechazada');
+        const pagada = c => c.pago === 'pagado' || (!c.pago && c.estado === 'atendida');
         const suma = lista => lista.reduce((t, c) => t + valorCita(c), 0);
+        const recibido = suma(semana.filter(c => pagada(c) && c.estado !== 'rechazada'));
+        const porCobrar = suma(semana.filter(c => (c.estado === 'pendiente' || c.estado === 'confirmada') && !pagada(c)));
+        const penalizaciones = semana.reduce((t, c) => t + (Number(c.penalizacion) || 0), 0);
 
         const tarjeta = (valor, texto, clase = '') => `<div class="res-tarjeta ${clase}"><strong>${valor}</strong><span>${texto}</span></div>`;
         let html = '<div class="res-tarjetas">' +
             tarjeta(activas.length, 'citas agendadas') +
+            tarjeta(porAceptar.length, 'por aceptar', 'leve') +
+            tarjeta(pendientes.length, 'confirmadas por atender', 'azul') +
             tarjeta(atendidas.length, 'atendidas', 'ok') +
-            tarjeta(pendientes.length, 'por atender', 'azul') +
-            tarjeta(canceladas.length, 'canceladas', 'gris') +
-            tarjeta(pesos(suma(atendidas)), 'ingresos de citas atendidas', 'ok') +
-            tarjeta(pesos(suma(pendientes)), 'ingresos por confirmar', 'azul') +
+            tarjeta(canceladas.length, 'canceladas o rechazadas', 'gris') +
+            tarjeta(pesos(recibido), 'pagos recibidos', 'ok') +
+            tarjeta(pesos(porCobrar), 'por cobrar', 'azul') +
+            tarjeta(pesos(penalizaciones), 'penalizaciones', 'leve') +
             '</div>';
 
         if (!semana.length) {
@@ -2760,12 +2858,12 @@ if (pagina('panel')) (function () {
 
         // Por profesional
         html += '<div class="panel-caja"><h2>Por profesional</h2><table class="informe-tabla"><thead><tr>' +
-            '<th>Profesional</th><th>Agendadas</th><th>Atendidas</th><th>Canceladas</th><th>Ingresos atendidas</th></tr></thead><tbody>' +
+            '<th>Profesional</th><th>Agendadas</th><th>Atendidas</th><th>Canceladas</th><th>Pagos recibidos</th></tr></thead><tbody>' +
             PROFESIONALES.map(p => {
                 const deP = semana.filter(c => c.profesional === p);
-                return `<tr><td>${esc(p)}</td><td>${deP.filter(c => c.estado !== 'cancelada').length}</td>` +
-                    `<td>${deP.filter(c => c.estado === 'atendida').length}</td><td>${deP.filter(c => c.estado === 'cancelada').length}</td>` +
-                    `<td>${pesos(suma(deP.filter(c => c.estado === 'atendida')))}</td></tr>`;
+                return `<tr><td>${esc(p)}</td><td>${deP.filter(c => c.estado !== 'cancelada' && c.estado !== 'rechazada').length}</td>` +
+                    `<td>${deP.filter(c => c.estado === 'atendida').length}</td><td>${deP.filter(c => c.estado === 'cancelada' || c.estado === 'rechazada').length}</td>` +
+                    `<td>${pesos(suma(deP.filter(c => pagada(c) && c.estado !== 'rechazada')))}</td></tr>`;
             }).join('') + '</tbody></table></div>';
 
         // Por día
@@ -2851,7 +2949,7 @@ if (pagina('panel')) (function () {
     }
 
     function citasDelDia(profesional, fecha) {
-        return citas.filter(c => c.fecha === fecha && c.profesional === profesional && c.estado === 'confirmada')
+        return citas.filter(c => c.fecha === fecha && c.profesional === profesional && (c.estado === 'confirmada' || c.estado === 'pendiente'))
             .sort((a, b) => aMinutos(a.hora) - aMinutos(b.hora));
     }
 
@@ -2994,12 +3092,13 @@ if (pagina('panel')) (function () {
 // ============================================================
 // MI CITA: ver, cambiar o cancelar (cita.html?id=...&t=...)
 // ============================================================
-if (pagina('cita')) (async function () {
+if (pagina('cita') && !pagina('responder')) (async function () {
     const $ = id => document.getElementById(id);
     const parametros = new URLSearchParams(location.search);
     const id = parametros.get('id') || '';
     const token = parametros.get('t') || '';
     let cita = null;
+    let penalizacionSiCancela = 0;
 
     function mensaje(texto, tipo) {
         $('citaMensaje').textContent = texto;
@@ -3032,32 +3131,53 @@ if (pagina('cita')) (async function () {
         $('citaHora').textContent = cita.hora;
         $('citaProfesional').textContent = cita.profesional;
         $('citaServicios').textContent = cita.servicios;
-        const estados = { confirmada: 'Confirmada', cancelada: 'Cancelada', atendida: 'Atendida' };
-        $('citaEstado').textContent = estados[cita.estado] || cita.estado;
+        $('citaEstado').textContent = ESTADOS_CITA[cita.estado] || cita.estado;
         $('citaEstado').className = 'cita-estado ' + cita.estado;
+        $('citaNumero').textContent = cita.numero || cita.id;
+        $('citaTotal').textContent = Number(cita.valor) ? pesosCOP(cita.valor) : '—';
+        $('citaPago').textContent = cita.pago === 'pagado' ? '✓ Pagado' : 'Pendiente';
+        $('citaPago').className = cita.pago === 'pagado' ? 'cita-pagado' : 'cita-sin-pago';
+        penalizacionSiCancela = r.penalizacionSiCancela || 0;
 
-        const activa = cita.estado === 'confirmada';
+        const activa = cita.estado === 'confirmada' || cita.estado === 'pendiente';
         $('citaCalendario').hidden = !activa;
         $('citaGoogle').href = enlaceGoogleCalendar(cita, detalleGestion());
-        $('citaGestion').hidden = !(activa && r.puedeCambiar);
+        $('citaGestion').hidden = !(activa && (r.puedeCambiar || r.puedeCancelar));
+        $('citaCambiar').hidden = !r.puedeCambiar;
         $('citaNota').textContent = !activa ? 'Si quieres una nueva cita, puedes agendarla en nuestra página.'
-            : r.puedeCambiar ? `Puedes cambiar o cancelar tu cita en línea hasta ${r.horasMinimas} horas antes.`
-            : `Faltan menos de ${r.horasMinimas} horas para tu cita, así que ya no se puede cambiar en línea. Escríbenos por WhatsApp.`;
+            : r.puedeCambiar ? `Puedes cambiar o cancelar tu cita sin costo hasta ${r.horasMinimas} horas antes.`
+            : `Faltan menos de ${r.horasMinimas} horas para tu cita: ya no se puede cambiar, y si cancelas se cobra una penalización del 50 %` +
+              (penalizacionSiCancela ? ` (${pesosCOP(penalizacionSiCancela)})` : '') + '.';
+
+        const info = [];
+        if (cita.estado === 'pendiente') info.push('Tu reserva está pendiente: el profesional la aceptará o rechazará y te avisaremos por correo.');
+        if (activa && cita.pago !== 'pagado') info.push('Recuerda realizar el pago antes de 12 horas de tu cita; si no, se da por cancelada.');
+        if (cita.nota) info.push(cita.nota + '.');
+        if (Number(cita.penalizacion)) info.push('Penalización por cancelación tardía: ' + pesosCOP(cita.penalizacion) + '.');
+        $('citaInfo').textContent = info.join(' ');
+        $('citaInfo').hidden = !info.length;
+        $('citaPoliticas').innerHTML = (r.politicas || []).map(t => `<li>${esc(t)}</li>`).join('');
         $('citaDetalle').hidden = false;
         $('citaCambio').hidden = true;
     }
 
     $('citaIcs').addEventListener('click', () => descargarICS(cita, detalleGestion()));
+    $('citaPdf').addEventListener('click', () => descargarComprobante(id, token)
+        .catch(e => mensaje(/fetch/i.test(e.message) ? 'No se pudo conectar. Intenta de nuevo.' : e.message, 'error')));
 
     // Cancelar
     $('citaCancelar').addEventListener('click', async () => {
-        if (!confirm('¿Seguro que quieres cancelar tu cita? La hora quedará libre para otra persona.')) return;
+        const texto = penalizacionSiCancela
+            ? `Faltan menos de 12 horas para tu cita. Si cancelas ahora se cobra una penalización del 50 %: ${pesosCOP(penalizacionSiCancela)}.\n\n¿Quieres cancelar de todos modos?`
+            : '¿Seguro que quieres cancelar tu cita? La hora quedará libre para otra persona.';
+        if (!confirm(texto)) return;
         $('citaCancelar').disabled = true;
         try {
-            const r = await llamarAPI('cancelarCita', { id, token });
+            const r = await llamarAPI('cancelarCita', { id, token, aceptaPenalizacion: !!penalizacionSiCancela });
             if (!r.ok) throw new Error(r.error);
             await cargar();
-            mensaje('✓ Tu cita fue cancelada. Te enviamos un correo de confirmación.', 'ok');
+            mensaje('✓ Tu cita fue cancelada' + (r.penalizacion ? ` con una penalización de ${pesosCOP(r.penalizacion)}` : ' sin costo') +
+                '. Te enviamos un correo de confirmación.', 'ok');
         } catch (e) {
             mensaje(/fetch/i.test(e.message) ? 'No se pudo conectar. Intenta de nuevo.' : e.message, 'error');
         } finally { $('citaCancelar').disabled = false; }
@@ -3123,5 +3243,91 @@ if (pagina('cita')) (async function () {
         }
     });
 
+    cargar();
+})();
+
+
+// ============================================================
+// ACEPTAR O RECHAZAR UNA CITA (responder.html?id=...&k=...)
+// Enlace que le llega al profesional por correo.
+// ============================================================
+if (pagina('responder')) (async function () {
+    const $ = id => document.getElementById(id);
+    const parametros = new URLSearchParams(location.search);
+    const id = parametros.get('id') || '';
+    const k = parametros.get('k') || '';
+    let cita = null;
+
+    function mensaje(texto, tipo) {
+        $('respMensaje').textContent = texto;
+        $('respMensaje').hidden = !texto;
+        $('respMensaje').className = 'aviso-prueba' + (tipo ? ' cita-mensaje-' + tipo : '');
+    }
+
+    function fechaLarga(fecha) {
+        const [a, m, d] = fecha.split('-').map(Number);
+        const t = new Date(a, m - 1, d).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+
+    function pintar() {
+        $('respTitulo').textContent = 'Solicitud de cita N.º ' + (cita.numero || cita.id);
+        $('respPaciente').textContent = cita.nombre;
+        $('respContacto').textContent = `${cita.telefono} · ${cita.correo}`;
+        $('respFecha').textContent = `${fechaLarga(cita.fecha)} · ${cita.hora} (${cita.duracion} min)`;
+        $('respProfesional').textContent = cita.profesional;
+        $('respServicios').textContent = cita.servicios;
+        $('respTotal').textContent = Number(cita.valor) ? pesosCOP(cita.valor) : '—';
+        $('respMensajePaciente').textContent = cita.mensaje || '—';
+        $('respEstado').textContent = ESTADOS_CITA[cita.estado] || cita.estado;
+        $('respEstado').className = 'cita-estado ' + cita.estado;
+        $('respAcciones').hidden = cita.estado !== 'pendiente';
+        $('respDetalle').hidden = false;
+
+        const telefono = String(cita.telefono).replace(/\D/g, '');
+        const nombre = cita.nombre.split(' ')[0];
+        const texto = cita.estado === 'confirmada'
+            ? `Hola ${nombre}, te confirmamos tu cita N.º ${cita.numero} el ${fechaLarga(cita.fecha)} a las ${cita.hora} con ${cita.profesional}. Recuerda realizar el pago de ${pesosCOP(cita.valor)} antes de 12 horas de la cita y enviarnos el comprobante.`
+            : `Hola ${nombre}, lamentamos no poder atenderte el ${fechaLarga(cita.fecha)} a las ${cita.hora}. ¿Te gustaría elegir otro horario?`;
+        $('respWhatsApp').hidden = !(telefono && (cita.estado === 'confirmada' || cita.estado === 'rechazada'));
+        $('respWhatsApp').href = `https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`;
+    }
+
+    async function cargar() {
+        if (!apiActiva()) return mensaje('La base de datos no está configurada.', 'error');
+        try {
+            const r = await llamarAPI('verCitaPro', { id, k });
+            if (!r.ok) { $('respTitulo').textContent = 'Enlace no válido'; return mensaje(r.error, 'error'); }
+            cita = r.cita;
+            pintar();
+        } catch (e) {
+            $('respTitulo').textContent = 'Sin conexión';
+            mensaje('No se pudo conectar. Intenta de nuevo.', 'error');
+        }
+    }
+
+    async function responder(decision) {
+        let motivo = '';
+        if (decision === 'rechazar') {
+            motivo = $('respMotivo').value.trim();
+            if (!confirm('¿Rechazar esta cita? Se le enviará un correo al paciente y la hora quedará libre.')) return;
+        }
+        $('respAceptar').disabled = $('respRechazar').disabled = true;
+        try {
+            const r = await llamarAPI('responderCita', { id, k, decision, motivo });
+            if (!r.ok) throw new Error(r.error);
+            await cargar();
+            mensaje(decision === 'aceptar'
+                ? '✓ Cita aceptada. Le enviamos un correo al paciente. Si quieres, avísale también por WhatsApp.'
+                : '✓ Cita rechazada. Le enviamos un correo al paciente y la hora quedó libre.', 'ok');
+        } catch (e) {
+            mensaje(/fetch/i.test(e.message) ? 'No se pudo conectar. Intenta de nuevo.' : e.message, 'error');
+        } finally {
+            $('respAceptar').disabled = $('respRechazar').disabled = false;
+        }
+    }
+
+    $('respAceptar').addEventListener('click', () => responder('aceptar'));
+    $('respRechazar').addEventListener('click', () => responder('rechazar'));
     cargar();
 })();

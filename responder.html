@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Aceptar o rechazar una solicitud de cita.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Responder Cita | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-prueba pg-cita pg-responder">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="organizaciones.html">Organizaciones</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <p class="prueba-categoria">Profesional</p>
+            <h1 id="respTitulo">Cargando solicitud...</h1>
+            <div class="aviso-prueba" id="respMensaje" role="status" hidden></div>
+
+            <section id="respDetalle" hidden>
+                <dl class="cita-resumen">
+                    <div><dt>👤 Paciente</dt><dd id="respPaciente"></dd></div>
+                    <div><dt>📞 Contacto</dt><dd id="respContacto"></dd></div>
+                    <div><dt>📅 Fecha y hora</dt><dd id="respFecha"></dd></div>
+                    <div><dt>🧑‍⚕️ Profesional</dt><dd id="respProfesional"></dd></div>
+                    <div><dt>🩺 Servicios</dt><dd id="respServicios"></dd></div>
+                    <div><dt>💰 Total</dt><dd id="respTotal"></dd></div>
+                    <div><dt>💭 Mensaje</dt><dd id="respMensajePaciente"></dd></div>
+                    <div><dt>Estado</dt><dd><span class="cita-estado" id="respEstado"></span></dd></div>
+                </dl>
+
+                <div id="respAcciones" hidden>
+                    <div class="cita-acciones">
+                        <button type="button" id="respAceptar" class="cita-btn cita-btn-principal">✅ Aceptar cita</button>
+                        <button type="button" id="respRechazar" class="cita-btn cita-btn-peligro">❌ Rechazar cita</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="respMotivo">Motivo del rechazo (opcional, se le envía al paciente):</label>
+                        <input type="text" id="respMotivo" placeholder="Ej.: ese día no hay disponibilidad">
+                    </div>
+                </div>
+
+                <div class="cita-acciones">
+                    <a id="respWhatsApp" class="cita-btn" target="_blank" rel="noopener" hidden>📱 Avisar al paciente por WhatsApp</a>
+                    <a href="panel.html" class="cita-btn">Abrir el panel</a>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/config.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>

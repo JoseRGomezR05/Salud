@@ -14,10 +14,14 @@
  *   Excepciones     → horario especial de una fecha (por ejemplo, un
  *                     sábado en que solo se atiende en la tarde)
  *
- * Correos: al agendar, cambiar o cancelar una cita se envía un correo
- * al paciente y un aviso a la cuenta dueña del script. Cada día a las
- * 7 a. m. se envían los recordatorios de las citas del día siguiente
- * (la función instalar crea ese activador automático).
+ * Flujo de una cita: el paciente reserva → queda "pendiente" → el
+ * profesional la acepta o rechaza (correo con botón o panel) → "confirmada".
+ * El paciente recibe un comprobante en PDF con el total, los medios de
+ * pago, las indicaciones y las políticas.
+ *
+ * Activadores automáticos (los crea la función instalar):
+ *   enviarRecordatorios → cada día a las 7 a. m., citas de mañana
+ *   revisarPagos        → cada hora, cancela las citas sin pago a tiempo
  *
  * La clave del panel se guarda en las Propiedades del script
  * (CLAVE_ADMIN), nunca en este archivo.
@@ -29,6 +33,28 @@ const MINUTOS_POR_CITA = 45;   // separación entre las horas de la agenda
 const SITIO_URL = 'https://josergomezr05.github.io/Salud/';
 const HORAS_MINIMAS_CAMBIO = 12;   // el paciente puede cancelar o cambiar hasta 12 horas antes
 const AVISAR_AL_DUENO = true;      // enviar un aviso por correo al dueño del script
+const PENALIZACION_CANCELACION = 0.5;   // 50 % si cancela con menos de 12 horas
+const PAGO_LIMITE_HORAS = 12;      // el pago debe estar hecho 12 horas antes de la cita
+const CANCELAR_SIN_PAGO = true;    // cancelar automáticamente las citas sin pago a tiempo
+
+// Textos del comprobante y de los correos (mantenerlos iguales a JS/config.js)
+const INDICACIONES = [
+  'Llega 15 minutos antes de la hora de tu cita.',
+  'Si tu cita es virtual, te enviaremos el enlace de la videollamada por WhatsApp. Conéctate desde un lugar tranquilo y privado.',
+  'Tu reserva queda pendiente hasta que el profesional la acepte. Te avisaremos por correo.',
+  'Envía el comprobante de pago por WhatsApp al 300 480 4521.'
+];
+const POLITICAS = [
+  'El pago se realiza antes de la cita. Si a las 12 horas antes de la cita no se ha recibido el pago, la cita se da por cancelada.',
+  'Puedes cancelar o cambiar tu cita sin costo hasta 12 horas antes.',
+  'Si cancelas con menos de 12 horas de anticipación o el mismo día, se cobra una penalización del 50 % del valor de la atención.',
+  'Si no asistes a la cita sin avisar, no hay devolución del pago.'
+];
+const MEDIOS_PAGO = [
+  ['Bancolombia', 'Cuenta 487-000054-76 · Llave @joseg9688'],
+  ['Nequi', '300 480 4521'],
+  ['Daviplata', '300 480 4521 · Llave @PLATA3004804521']
+];
 // Dos horas seguidas de la agenda con una separación de hasta 15 minutos
 // se consideran parte de la misma jornada (ej. 11:00 → 12:00 → 1:00 PM).
 const TOLERANCIA_JORNADA = 15;
@@ -37,7 +63,7 @@ const HOJAS = {
   Empresas: ['codigo', 'nombre', 'plan', 'pruebas', 'areas', 'limite', 'creada', 'estado'],
   Respuestas: ['fecha', 'empresa', 'participante', 'area', 'prueba', 'puntaje', 'nivel', 'respuestas'],
   Citas: ['id', 'creada', 'fecha', 'hora', 'duracion', 'profesional', 'servicios', 'nombre', 'telefono', 'correo', 'mensaje', 'estado',
-          'valor', 'token', 'recordatorio'],
+          'valor', 'token', 'recordatorio', 'pago', 'penalizacion', 'numero', 'tokenPro', 'nota'],
   Disponibilidad: ['profesional', 'dia', 'horas'],
   Bloqueos: ['id', 'fecha', 'profesional', 'motivo'],
   // Horario especial de un día: reemplaza el horario semanal en esa fecha
@@ -80,6 +106,13 @@ function instalar() {
   } else {
     Logger.log('⏰ Los recordatorios diarios ya estaban activados.');
   }
+
+  // Activador cada hora: cancela las citas sin pago a tiempo
+  const existePagos = ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'revisarPagos');
+  if (!existePagos) {
+    ScriptApp.newTrigger('revisarPagos').timeBased().everyHours(1).create();
+    Logger.log('💳 Revisión de pagos activada (cada hora).');
+  }
   Logger.log('📧 Correos disponibles hoy: ' + MailApp.getRemainingDailyQuota());
 }
 
@@ -88,9 +121,10 @@ function probarCorreo() {
   const yo = Session.getEffectiveUser().getEmail();
   enviarCorreoCita({
     id: 'PRUEBA', fecha: hoyTexto(), hora: '6:00 PM', duracion: 60, profesional: 'José Rafael Gómez',
-    servicios: 'Terapia Individual', nombre: 'Paciente de prueba', correo: yo, token: 'prueba'
-  }, 'confirmacion');
-  Logger.log('📧 Correo de prueba enviado a ' + yo);
+    servicios: 'Terapia Individual ($100.000)', nombre: 'Paciente de prueba', correo: yo, token: 'prueba',
+    telefono: '300 000 0000', valor: 100000, numero: 'R-PRUEBA', estado: 'pendiente', pago: 'pendiente'
+  }, 'solicitud');
+  Logger.log('📧 Correo de prueba (con el comprobante PDF) enviado a ' + yo);
 }
 
 // ------------------------------------------------------------
@@ -115,7 +149,10 @@ function doPost(e) {
     crearCita: crearCita,
     verCita: verCita,
     cancelarCita: cancelarCita,
-    reprogramarCita: reprogramarCita
+    reprogramarCita: reprogramarCita,
+    comprobante: comprobante,
+    verCitaPro: verCitaPro,
+    responderCita: responderCita
   };
   const privadas = {
     login: () => ({ ok: true }),
@@ -127,6 +164,8 @@ function doPost(e) {
     eliminarEmpresa: eliminarEmpresa,
     listarCitas: listarCitas,
     cambiarEstadoCita: cambiarEstadoCita,
+    responderCitaPanel: responderCitaPanel,
+    marcarPago: marcarPago,
     leerDisponibilidad: leerDisponibilidad,
     guardarDisponibilidad: guardarDisponibilidad,
     agregarBloqueo: agregarBloqueo,
@@ -441,7 +480,7 @@ function hoyTexto() {
 
 function intervalosOcupados(fecha, profesional, excluirId) {
   return leer('Citas')
-    .filter(c => c.fecha === fecha && c.profesional === profesional && c.estado !== 'cancelada' && (!excluirId || c.id !== excluirId))
+    .filter(c => c.fecha === fecha && c.profesional === profesional && c.estado !== 'cancelada' && c.estado !== 'rechazada' && (!excluirId || c.id !== excluirId))
     .map(c => {
       const inicio = aMinutos(c.hora);
       return [inicio, inicio + (parseInt(c.duracion, 10) || MINUTOS_POR_CITA)];
@@ -467,6 +506,7 @@ function crearCita(d) {
     if (!disponible.abierto) return { ok: false, ocupado: true, error: disponible.motivo };
     if (!disponible.horas[0].libre) return { ok: false, ocupado: true, error: mensajeNoLibre(disponible.horas[0].motivo) };
 
+    const todas = leer('Citas');
     const cita = {
       id: Utilities.getUuid().slice(0, 8),
       creada: ahora(),
@@ -479,15 +519,20 @@ function crearCita(d) {
       telefono: texto(d.telefono, 30),
       correo: texto(d.correo, 120),
       mensaje: texto(d.mensaje, 1000),
-      estado: 'confirmada',
+      estado: 'pendiente',
       valor: parseInt(d.valor, 10) || '',
       token: Utilities.getUuid().replace(/-/g, '').slice(0, 16),
-      recordatorio: ''
+      recordatorio: '',
+      pago: 'pendiente',
+      penalizacion: '',
+      numero: 'R-' + ('00000' + (todas.length + 1)).slice(-5),
+      tokenPro: Utilities.getUuid().replace(/-/g, '').slice(0, 20),
+      nota: ''
     };
     agregar('Citas', [cita]);
-    enviarCorreoCita(cita, 'confirmacion');
-    avisarDueno('Nueva cita', cita);
-    return { ok: true, id: cita.id, token: cita.token };
+    enviarCorreoCita(cita, 'solicitud');
+    avisarDueno('Nueva solicitud de cita (por aceptar)', cita);
+    return { ok: true, id: cita.id, token: cita.token, numero: cita.numero };
   });
 }
 
@@ -496,6 +541,12 @@ function mensajeNoLibre(motivo) {
   if (motivo === 'ya pasó') return 'Esa hora ya pasó. Por favor elige otra.';
   if (motivo === 'no disponible') return 'Esa hora no está disponible. Por favor elige otra.';
   return 'Esa hora acaba de ser reservada. Por favor elige otra.';
+}
+
+const ACTIVAS = ['pendiente', 'confirmada'];
+
+function pesos(n) {
+  return '$' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 // ------------------------------------------------------------
@@ -516,21 +567,41 @@ function inicioCita(cita) {
   return new Date(cita.fecha + 'T' + hh + ':' + mm + ':00-05:00');
 }
 
+function horasParaCita(cita) {
+  return (inicioCita(cita).getTime() - Date.now()) / 3600000;
+}
+
+// Cambiar la fecha solo se permite con 12 horas o más de anticipación
 function puedeCambiar(cita) {
-  return cita.estado === 'confirmada' &&
-    inicioCita(cita).getTime() - Date.now() >= HORAS_MINIMAS_CAMBIO * 3600000;
+  return ACTIVAS.indexOf(cita.estado) !== -1 && horasParaCita(cita) >= HORAS_MINIMAS_CAMBIO;
+}
+
+// Cancelar se permite hasta la hora de la cita (con penalización si faltan menos de 12 horas)
+function puedeCancelar(cita) {
+  return ACTIVAS.indexOf(cita.estado) !== -1 && horasParaCita(cita) > 0;
+}
+
+function penalizacionDe(cita) {
+  return Math.round((Number(cita.valor) || 0) * PENALIZACION_CANCELACION);
 }
 
 function verCita(d) {
   const r = buscarCitaConToken(d);
   if (!r.cita) return { ok: false, error: 'No encontramos esta cita. Revisa el enlace.' };
   const c = r.cita;
+  const conPenalizacion = puedeCancelar(c) && horasParaCita(c) < HORAS_MINIMAS_CAMBIO;
   return {
     ok: true,
-    cita: { id: c.id, fecha: c.fecha, hora: c.hora, duracion: c.duracion, profesional: c.profesional,
-            servicios: c.servicios, nombre: c.nombre, estado: c.estado },
+    cita: {
+      id: c.id, numero: c.numero, fecha: c.fecha, hora: c.hora, duracion: c.duracion, profesional: c.profesional,
+      servicios: c.servicios, nombre: c.nombre, estado: c.estado, valor: c.valor, pago: c.pago,
+      penalizacion: c.penalizacion, nota: c.nota
+    },
     puedeCambiar: puedeCambiar(c),
-    horasMinimas: HORAS_MINIMAS_CAMBIO
+    puedeCancelar: puedeCancelar(c),
+    penalizacionSiCancela: conPenalizacion ? penalizacionDe(c) : 0,
+    horasMinimas: HORAS_MINIMAS_CAMBIO,
+    politicas: POLITICAS
   };
 }
 
@@ -538,12 +609,21 @@ function cancelarCita(d) {
   return conBloqueo(() => {
     const r = buscarCitaConToken(d);
     if (!r.cita) return { ok: false, error: 'No encontramos esta cita. Revisa el enlace.' };
-    if (!puedeCambiar(r.cita)) return { ok: false, error: 'Esta cita ya no se puede cancelar en línea. Escríbenos por WhatsApp.' };
+    if (!puedeCancelar(r.cita)) return { ok: false, error: 'Esta cita ya no se puede cancelar en línea. Escríbenos por WhatsApp.' };
+
+    const tarde = horasParaCita(r.cita) < HORAS_MINIMAS_CAMBIO;
+    if (tarde && penalizacionDe(r.cita) > 0 && d.aceptaPenalizacion !== true) {
+      return { ok: false, requierePenalizacion: true, penalizacion: penalizacionDe(r.cita),
+               error: 'Faltan menos de ' + HORAS_MINIMAS_CAMBIO + ' horas: la cancelación tiene una penalización del 50 %.' };
+    }
     r.cita.estado = 'cancelada';
+    r.cita.penalizacion = tarde ? penalizacionDe(r.cita) : '';
+    r.cita.nota = tarde ? 'Cancelada por el paciente con menos de ' + HORAS_MINIMAS_CAMBIO + ' horas (penalización 50 %)'
+                        : 'Cancelada por el paciente';
     reescribir('Citas', r.citas);
     enviarCorreoCita(r.cita, 'cancelacion');
-    avisarDueno('Cita cancelada por el paciente', r.cita);
-    return { ok: true };
+    avisarDueno(tarde ? 'Cita cancelada con penalización' : 'Cita cancelada por el paciente', r.cita);
+    return { ok: true, penalizacion: r.cita.penalizacion || 0 };
   });
 }
 
@@ -575,8 +655,110 @@ function reprogramarCita(d) {
   });
 }
 
+// PDF del comprobante para descargar desde la página
+function comprobante(d) {
+  const r = buscarCitaConToken(d);
+  if (!r.cita) return { ok: false, error: 'No encontramos esta cita.' };
+  const pdf = pdfComprobante(r.cita);
+  return { ok: true, nombre: pdf.getName(), base64: Utilities.base64Encode(pdf.getBytes()) };
+}
+
 // ------------------------------------------------------------
-// CORREOS Y RECORDATORIOS
+// EL PROFESIONAL ACEPTA O RECHAZA (responder.html?id=...&k=...)
+// ------------------------------------------------------------
+function buscarCitaPro(d) {
+  const citas = leer('Citas');
+  const cita = citas.find(c => c.id === texto(d.id, 20));
+  if (!cita || !cita.tokenPro || cita.tokenPro !== texto(d.k, 40)) return { citas: citas, cita: null };
+  return { citas: citas, cita: cita };
+}
+
+function verCitaPro(d) {
+  const r = buscarCitaPro(d);
+  if (!r.cita) return { ok: false, error: 'Enlace no válido.' };
+  const c = r.cita;
+  return { ok: true, cita: {
+    id: c.id, numero: c.numero, fecha: c.fecha, hora: c.hora, duracion: c.duracion, profesional: c.profesional,
+    servicios: c.servicios, nombre: c.nombre, telefono: c.telefono, correo: c.correo, mensaje: c.mensaje,
+    estado: c.estado, valor: c.valor, pago: c.pago
+  } };
+}
+
+function responderCita(d) {
+  return conBloqueo(() => {
+    const r = buscarCitaPro(d);
+    if (!r.cita) return { ok: false, error: 'Enlace no válido.' };
+    return aplicarRespuesta(r.citas, r.cita, d.decision, d.motivo);
+  });
+}
+
+function responderCitaPanel(d) {
+  return conBloqueo(() => {
+    const citas = leer('Citas');
+    const cita = citas.find(c => c.id === d.id);
+    if (!cita) return { ok: false, error: 'Cita no encontrada.' };
+    return aplicarRespuesta(citas, cita, d.decision, d.motivo);
+  });
+}
+
+function aplicarRespuesta(citas, cita, decision, motivo) {
+  if (cita.estado !== 'pendiente') return { ok: false, error: 'Esta cita ya fue respondida (estado: ' + cita.estado + ').' };
+  if (decision === 'aceptar') {
+    cita.estado = 'confirmada';
+    reescribir('Citas', citas);
+    enviarCorreoCita(cita, 'aceptada');
+  } else if (decision === 'rechazar') {
+    cita.estado = 'rechazada';
+    cita.nota = texto(motivo, 300) || 'Rechazada por el profesional';
+    reescribir('Citas', citas);
+    enviarCorreoCita(cita, 'rechazada');
+  } else {
+    return { ok: false, error: 'Decisión no válida.' };
+  }
+  return { ok: true, estado: cita.estado, telefono: cita.telefono, nombre: cita.nombre };
+}
+
+function marcarPago(d) {
+  return conBloqueo(() => {
+    const citas = leer('Citas');
+    const cita = citas.find(c => c.id === d.id);
+    if (!cita) return { ok: false, error: 'Cita no encontrada.' };
+    const antes = cita.pago;
+    cita.pago = d.pago === 'pagado' ? 'pagado' : 'pendiente';
+    reescribir('Citas', citas);
+    if (cita.pago === 'pagado' && antes !== 'pagado') enviarCorreoCita(cita, 'pago');
+    return { ok: true };
+  });
+}
+
+// La ejecuta el activador cada hora: cancela las citas que no se pagaron a tiempo
+function revisarPagos() {
+  if (!CANCELAR_SIN_PAGO) return 0;
+  return conBloqueo(() => {
+    const citas = leer('Citas');
+    const ahoraMs = Date.now();
+    let canceladas = 0;
+    citas.forEach(c => {
+      if (ACTIVAS.indexOf(c.estado) === -1 || c.pago === 'pagado') return;
+      const horas = horasParaCita(c);
+      // Margen de 2 horas para quien reserva a última hora
+      const creada = new Date(String(c.creada).replace(' ', 'T') + ':00-05:00').getTime();
+      if (horas <= PAGO_LIMITE_HORAS && ahoraMs - creada >= 2 * 3600000) {
+        c.estado = 'cancelada';
+        c.nota = 'Cancelada automáticamente: no se recibió el pago ' + PAGO_LIMITE_HORAS + ' horas antes';
+        enviarCorreoCita(c, 'sinpago');
+        avisarDueno('Cita cancelada por falta de pago', c);
+        canceladas++;
+      }
+    });
+    if (canceladas) reescribir('Citas', citas);
+    console.log('Citas canceladas por falta de pago: ' + canceladas);
+    return canceladas;
+  });
+}
+
+// ------------------------------------------------------------
+// CORREOS, COMPROBANTE PDF Y RECORDATORIOS
 // ------------------------------------------------------------
 const DIAS_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
@@ -604,20 +786,104 @@ function enlaceGestion(cita) {
   return SITIO_URL + 'cita.html?id=' + encodeURIComponent(cita.id) + '&t=' + encodeURIComponent(cita.token);
 }
 
+function enlaceResponder(cita) {
+  return SITIO_URL + 'responder.html?id=' + encodeURIComponent(cita.id) + '&k=' + encodeURIComponent(cita.tokenPro);
+}
+
 function escaparHtml(t) {
   return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function listaHtml(items) {
+  return '<ul style="margin:6px 0 0 18px;padding:0">' + items.map(i => '<li style="margin-bottom:4px">' + escaparHtml(i) + '</li>').join('') + '</ul>';
+}
+
+function tablaPagos() {
+  return '<table style="border-collapse:collapse;margin-top:6px">' + MEDIOS_PAGO.map(m =>
+    '<tr><td style="padding:3px 12px 3px 0"><strong>' + escaparHtml(m[0]) + '</strong></td><td>' + escaparHtml(m[1]) + '</td></tr>').join('') +
+    '</table>';
+}
+
+// Comprobante de reserva en PDF (se adjunta al correo y se puede descargar)
+function pdfComprobante(cita) {
+  const valor = Number(cita.valor) || 0;
+  const estados = { pendiente: 'Pendiente de aceptación', confirmada: 'Confirmada', cancelada: 'Cancelada',
+                    rechazada: 'Rechazada', atendida: 'Atendida' };
+  const servicios = String(cita.servicios || '').split(',').map(s => s.trim()).filter(Boolean);
+  const filas = servicios.map(s => {
+    const precio = (s.match(/\$\s?([\d.]+)/) || [])[1];
+    return '<tr><td style="padding:8px;border-bottom:1px solid #dde6ee">' + escaparHtml(s.replace(/\s*\(.*?\)\s*/g, '')) + '</td>' +
+      '<td style="padding:8px;border-bottom:1px solid #dde6ee;text-align:right">' + (precio ? '$' + escaparHtml(precio) : '') + '</td></tr>';
+  }).join('');
+
+  const html =
+    '<html><body style="font-family:Arial,sans-serif;color:#1e2b3a;font-size:12px;margin:30px">' +
+    '<table style="width:100%;border-collapse:collapse"><tr>' +
+    '<td><div style="font-size:22px;font-weight:bold;color:#1a4a6b">Bienestar Emocional</div>' +
+    '<div style="color:#5a7184">Atención psicológica profesional · Colombia<br>Tel. 300 480 4521 · rafa-0512@hotmail.com</div></td>' +
+    '<td style="text-align:right;vertical-align:top"><div style="font-size:16px;font-weight:bold;color:#1a4a6b">COMPROBANTE DE RESERVA</div>' +
+    '<div>N.º <strong>' + escaparHtml(cita.numero || cita.id) + '</strong></div>' +
+    '<div>Fecha de emisión: ' + ahora().slice(0, 10) + '</div></td></tr></table>' +
+    '<hr style="border:none;border-top:3px solid #3cb6a0;margin:16px 0">' +
+
+    '<table style="width:100%;border-collapse:collapse"><tr>' +
+    '<td style="vertical-align:top;width:50%"><div style="font-weight:bold;color:#1a4a6b;margin-bottom:4px">PACIENTE</div>' +
+    escaparHtml(cita.nombre) + '<br>' + escaparHtml(cita.telefono) + '<br>' + escaparHtml(cita.correo) + '</td>' +
+    '<td style="vertical-align:top"><div style="font-weight:bold;color:#1a4a6b;margin-bottom:4px">CITA</div>' +
+    fechaLarga(cita.fecha) + '<br>Hora: ' + escaparHtml(cita.hora) + ' (' + escaparHtml(cita.duracion) + ' min)<br>' +
+    'Profesional: ' + escaparHtml(cita.profesional) + '<br>Estado: <strong>' + (estados[cita.estado] || cita.estado) + '</strong></td>' +
+    '</tr></table>' +
+
+    '<table style="width:100%;border-collapse:collapse;margin-top:18px">' +
+    '<tr style="background:#1a4a6b;color:#fff"><th style="padding:8px;text-align:left">Servicio</th><th style="padding:8px;text-align:right">Valor</th></tr>' +
+    filas +
+    '<tr><td style="padding:10px 8px;text-align:right;font-weight:bold">TOTAL A PAGAR</td>' +
+    '<td style="padding:10px 8px;text-align:right;font-size:15px;font-weight:bold;color:#1a4a6b">' + pesos(valor) + ' COP</td></tr>' +
+    '<tr><td style="padding:2px 8px;text-align:right">Estado del pago</td><td style="padding:2px 8px;text-align:right">' +
+    (cita.pago === 'pagado' ? 'Pagado' : 'Pendiente') + '</td></tr>' +
+    '</table>' +
+
+    '<div style="margin-top:18px;padding:12px;background:#f3f8fc;border-left:4px solid #2a6496">' +
+    '<div style="font-weight:bold;color:#1a4a6b">MEDIOS DE PAGO</div>' + tablaPagos() +
+    '<div style="margin-top:6px">Realiza el pago antes de ' + PAGO_LIMITE_HORAS + ' horas de tu cita y envía el comprobante por WhatsApp al 300 480 4521 indicando el N.º <span style="white-space:nowrap">' +
+    escaparHtml(cita.numero || cita.id) + '</span>.</div></div>' +
+
+    '<div style="margin-top:16px"><div style="font-weight:bold;color:#1a4a6b">INDICACIONES</div>' + listaHtml(INDICACIONES) + '</div>' +
+    '<div style="margin-top:14px"><div style="font-weight:bold;color:#1a4a6b">POLÍTICAS DE PAGO Y CANCELACIÓN</div>' + listaHtml(POLITICAS) + '</div>' +
+
+    '<div style="margin-top:22px;font-size:10px;color:#5a7184;border-top:1px solid #dde6ee;padding-top:8px">' +
+    'Este documento es un comprobante de reserva y orden de pago; no reemplaza la factura electrónica. ' +
+    'Gestiona tu cita en: ' + escaparHtml(enlaceGestion(cita)) + '<br>' +
+    '¿Necesitas ayuda urgente? Línea 192 opción 4 · Línea 106 · Emergencias 123</div>' +
+    '</body></html>';
+
+  return Utilities.newBlob(html, 'text/html', 'comprobante.html').getAs('application/pdf')
+    .setName('Comprobante-' + (cita.numero || cita.id) + '.pdf');
+}
+
 function enviarCorreoCita(cita, tipo) {
   if (!cita.correo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cita.correo)) return;
-  const titulos = {
-    confirmacion: { asunto: 'Tu cita está agendada', titulo: '¡Tu cita está agendada!' },
-    recordatorio: { asunto: 'Recordatorio: tu cita es mañana', titulo: 'Te recordamos tu cita de mañana' },
-    cambio: { asunto: 'Tu cita fue cambiada', titulo: 'Tu cita fue cambiada' },
-    cancelacion: { asunto: 'Tu cita fue cancelada', titulo: 'Tu cita fue cancelada' }
+  const tipos = {
+    solicitud: { asunto: 'Recibimos tu solicitud de cita', titulo: 'Recibimos tu solicitud de cita',
+                 texto: 'Tu reserva quedó <strong>pendiente de aceptación</strong>. Te escribiremos cuando el profesional la confirme. Adjuntamos tu comprobante con el valor a pagar.' },
+    aceptada: { asunto: 'Tu cita fue confirmada', titulo: '¡Tu cita fue confirmada!',
+                texto: 'El profesional aceptó tu cita. Recuerda realizar el pago antes de ' + PAGO_LIMITE_HORAS + ' horas de la cita.' },
+    rechazada: { asunto: 'No fue posible confirmar tu cita', titulo: 'No fue posible confirmar tu cita',
+                 texto: 'Lo sentimos, el profesional no puede atenderte en ese horario' + (cita.nota ? ' (' + escaparHtml(cita.nota) + ')' : '') + '. Puedes elegir otro horario en nuestra página.' },
+    recordatorio: { asunto: 'Recordatorio: tu cita es mañana', titulo: 'Te recordamos tu cita de mañana',
+                    texto: cita.pago === 'pagado' ? 'Tu pago ya fue recibido. ¡Te esperamos!'
+                         : '<strong>Aún no hemos recibido tu pago.</strong> Si no se recibe ' + PAGO_LIMITE_HORAS + ' horas antes de la cita, se cancelará automáticamente.' },
+    cambio: { asunto: 'Tu cita fue cambiada', titulo: 'Tu cita fue cambiada', texto: 'Estos son los nuevos datos de tu cita.' },
+    cancelacion: { asunto: 'Tu cita fue cancelada', titulo: 'Tu cita fue cancelada',
+                   texto: Number(cita.penalizacion) > 0
+                     ? 'Como la cancelación se hizo con menos de ' + HORAS_MINIMAS_CAMBIO + ' horas de anticipación, aplica una <strong>penalización del 50 %: ' + pesos(cita.penalizacion) + '</strong>.'
+                     : 'La cancelación se hizo a tiempo, sin costo.' },
+    pago: { asunto: 'Recibimos tu pago', titulo: 'Recibimos tu pago', texto: 'Gracias, tu pago quedó registrado. ¡Te esperamos!' },
+    sinpago: { asunto: 'Tu cita fue cancelada por falta de pago', titulo: 'Tu cita fue cancelada',
+               texto: 'No recibimos el pago ' + PAGO_LIMITE_HORAS + ' horas antes de la cita, por lo que se dio por cancelada, según nuestras políticas. Si ya pagaste, escríbenos por WhatsApp.' }
   };
-  const t = titulos[tipo];
-  const activa = tipo !== 'cancelacion';
+  const t = tipos[tipo];
+  const activa = ['solicitud', 'aceptada', 'recordatorio', 'cambio', 'pago'].indexOf(tipo) !== -1;
   const boton = (url, texto, color) =>
     '<a href="' + url + '" style="display:inline-block;margin:6px 6px 0 0;padding:11px 18px;border-radius:8px;' +
     'background:' + color + ';color:#ffffff;text-decoration:none;font-weight:bold">' + texto + '</a>';
@@ -628,26 +894,34 @@ function enviarCorreoCita(cita, tipo) {
     '<strong style="font-size:18px">Bienestar Emocional</strong></div>' +
     '<div style="border:1px solid #dde6ee;border-top:none;padding:22px;border-radius:0 0 10px 10px">' +
     '<h2 style="color:#1a4a6b;margin-top:0">' + t.titulo + '</h2>' +
-    '<p>Hola ' + escaparHtml(cita.nombre.split(' ')[0]) + ',</p>' +
+    '<p>Hola ' + escaparHtml(String(cita.nombre).split(' ')[0]) + ',</p><p>' + t.texto + '</p>' +
     '<table style="border-collapse:collapse;margin:12px 0">' +
+    '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">N.º de reserva</td><td><strong>' + escaparHtml(cita.numero || cita.id) + '</strong></td></tr>' +
     '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">📅 Fecha</td><td><strong>' + fechaLarga(cita.fecha) + '</strong></td></tr>' +
     '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">⏰ Hora</td><td><strong>' + escaparHtml(cita.hora) + '</strong></td></tr>' +
     '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">👤 Profesional</td><td>' + escaparHtml(cita.profesional) + '</td></tr>' +
     '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">🩺 Servicio</td><td>' + escaparHtml(cita.servicios) + '</td></tr>' +
+    '<tr><td style="padding:4px 12px 4px 0;color:#5a7184">💰 Total</td><td><strong>' + pesos(cita.valor) + '</strong>' +
+    (cita.pago === 'pagado' ? ' (pagado)' : '') + '</td></tr>' +
     '</table>' +
+    (activa && cita.pago !== 'pagado' ? '<p style="margin-bottom:2px"><strong>Medios de pago:</strong></p>' + tablaPagos() : '') +
     (activa
-      ? '<p>Por favor llega 15 minutos antes. Si es una cita virtual, te enviaremos el enlace por WhatsApp.</p>' +
-        boton(enlaceGoogleCalendar(cita), '📅 Agregar a Google Calendar', '#3cb6a0') +
-        boton(enlaceGestion(cita), 'Cambiar o cancelar mi cita', '#2a6496') +
-        '<p style="font-size:13px;color:#5a7184;margin-top:16px">Puedes cambiar o cancelar en línea hasta ' +
-        HORAS_MINIMAS_CAMBIO + ' horas antes de la cita.</p>'
-      : '<p>Si quieres agendar una nueva cita, entra a ' +
-        '<a href="' + SITIO_URL + 'Agendas.html">nuestra página</a> o escríbenos por WhatsApp.</p>') +
+      ? '<div style="margin-top:12px">' +
+        (tipo !== 'solicitud' ? boton(enlaceGoogleCalendar(cita), '📅 Agregar a Google Calendar', '#3cb6a0') : '') +
+        boton(enlaceGestion(cita), 'Ver, cambiar o cancelar mi cita', '#2a6496') + '</div>'
+      : '<p>Si quieres agendar una nueva cita, entra a <a href="' + SITIO_URL + 'Agendas.html">nuestra página</a> o escríbenos por WhatsApp.</p>') +
+    '<p style="margin:18px 0 2px"><strong>Políticas:</strong></p>' + listaHtml(POLITICAS) +
     '<p style="font-size:13px;color:#5a7184">¿Necesitas ayuda urgente? Línea 192 opción 4 · Línea 106 · Emergencias 123</p>' +
     '</div></div>';
 
+  const correo = { to: cita.correo, subject: t.asunto + ' - Bienestar Emocional', htmlBody: html, name: 'Bienestar Emocional' };
   try {
-    MailApp.sendEmail({ to: cita.correo, subject: t.asunto + ' - Bienestar Emocional', htmlBody: html, name: 'Bienestar Emocional' });
+    if (tipo === 'solicitud' || tipo === 'aceptada') correo.attachments = [pdfComprobante(cita)];
+  } catch (err) {
+    console.log('No se pudo crear el PDF: ' + err);
+  }
+  try {
+    MailApp.sendEmail(correo);
   } catch (err) {
     console.log('No se pudo enviar el correo: ' + err);
   }
@@ -655,14 +929,25 @@ function enviarCorreoCita(cita, tipo) {
 
 function avisarDueno(asunto, cita) {
   if (!AVISAR_AL_DUENO) return;
+  const pendiente = cita.estado === 'pendiente';
+  const html =
+    '<div style="font-family:Arial,sans-serif;max-width:560px;color:#1e2b3a">' +
+    '<h2 style="color:#1a4a6b">' + escaparHtml(asunto) + '</h2>' +
+    '<p><strong>' + escaparHtml(cita.nombre) + '</strong> · ' + escaparHtml(cita.telefono) + ' · ' + escaparHtml(cita.correo) + '</p>' +
+    '<p>N.º ' + escaparHtml(cita.numero || cita.id) + '<br>' + fechaLarga(cita.fecha) + ' · ' + escaparHtml(cita.hora) +
+    ' (' + escaparHtml(cita.duracion) + ' min)<br>' + escaparHtml(cita.profesional) + '<br>' + escaparHtml(cita.servicios) +
+    '<br>Total: ' + pesos(cita.valor) + ' · Pago: ' + escaparHtml(cita.pago || 'pendiente') + '</p>' +
+    (cita.mensaje ? '<p>Mensaje: ' + escaparHtml(cita.mensaje) + '</p>' : '') +
+    (cita.nota ? '<p>Nota: ' + escaparHtml(cita.nota) + '</p>' : '') +
+    (pendiente && cita.tokenPro
+      ? '<p><a href="' + enlaceResponder(cita) + '" style="display:inline-block;padding:12px 20px;border-radius:8px;background:#1a4a6b;color:#fff;text-decoration:none;font-weight:bold">Aceptar o rechazar esta cita</a></p>'
+      : '') +
+    '<p><a href="' + SITIO_URL + 'panel.html">Abrir el panel</a></p></div>';
   try {
     MailApp.sendEmail({
       to: Session.getEffectiveUser().getEmail(),
       subject: asunto + ': ' + cita.nombre + ' - ' + cita.fecha + ' ' + cita.hora,
-      body: asunto + '\n\n' +
-        'Paciente: ' + cita.nombre + '\nTeléfono: ' + cita.telefono + '\nCorreo: ' + cita.correo + '\n' +
-        'Fecha: ' + fechaLarga(cita.fecha) + '\nHora: ' + cita.hora + '\nProfesional: ' + cita.profesional + '\n' +
-        'Servicios: ' + cita.servicios + '\n\nPanel: ' + SITIO_URL + 'panel.html',
+      htmlBody: html,
       name: 'Bienestar Emocional'
     });
   } catch (err) {
@@ -670,7 +955,7 @@ function avisarDueno(asunto, cita) {
   }
 }
 
-// La ejecuta el activador diario: envía el recordatorio de las citas de mañana
+// La ejecuta el activador diario: envía el recordatorio de las citas confirmadas de mañana
 function enviarRecordatorios() {
   return conBloqueo(() => {
     const manana = Utilities.formatDate(new Date(Date.now() + 24 * 3600000), ZONA, 'yyyy-MM-dd');
@@ -698,7 +983,8 @@ function cambiarEstadoCita(d) {
     const citas = leer('Citas');
     const cita = citas.find(c => c.id === d.id);
     if (!cita) return { ok: false, error: 'Cita no encontrada.' };
-    cita.estado = ['confirmada', 'cancelada', 'atendida'].indexOf(d.estado) !== -1 ? d.estado : cita.estado;
+    cita.estado = ['pendiente', 'confirmada', 'cancelada', 'atendida', 'rechazada'].indexOf(d.estado) !== -1 ? d.estado : cita.estado;
+    if (d.estado === 'cancelada' && !cita.nota) cita.nota = 'Cancelada por el profesional';
     reescribir('Citas', citas);
     return { ok: true };
   });

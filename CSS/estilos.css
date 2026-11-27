@@ -5177,6 +5177,19 @@ body.pg-panel > main {
     :where(.pg-cita) .cita-resumen div { grid-template-columns: 1fr; gap: 2px; }
 }
 
+
+:where(.pg-cita) .cita-estado.pendiente { background: #fff4d6; color: #7a5200; }
+:where(.pg-cita) .cita-estado.rechazada { background: #fdecea; color: #b3261e; }
+:where(.pg-cita) .cita-pagado { color: #17694a; }
+:where(.pg-cita) .cita-sin-pago { color: #b3261e; }
+:where(.pg-cita) .cita-info { background: #fff8e1; color: #5d4300; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+:where(.pg-cita) .cita-politicas { margin-top: 12px; font-size: 14px; color: #333; }
+:where(.pg-cita) .cita-politicas summary { cursor: pointer; font-weight: 600; color: #1a4a6b; }
+:where(.pg-cita) .cita-politicas ul { margin: 8px 0 0 18px; line-height: 1.5; }
+:where(.pg-cita) .cita-btn[hidden] { display: none; }
+:where(.pg-panel) .res-tarjeta.leve { border-left-color: #e0a100; }
+:where(.pg-panel) .res-tarjeta.leve strong { color: #7a5200; }
+
 /* Al imprimir el informe solo sale el informe */
 @media print {
     body.pg-panel .site-header,
@@ -5190,6 +5203,19 @@ body.pg-panel > main {
 }
 
 
+
+
+/* Políticas en la agenda */
+:where(.pg-agendas) .politicas-reserva { margin: 1rem 0; padding: 1rem 1.2rem; background: #f3f8fc; border-left: 4px solid #2a6496; border-radius: 8px; text-align: left; }
+:where(.pg-agendas) .politicas-reserva h3 { color: #1a4a6b; font-size: 1.05rem; margin: 0 0 0.5rem; }
+:where(.pg-agendas) .politicas-reserva ul { margin: 0 0 0.6rem 1.1rem; padding: 0; font-size: 0.9rem; line-height: 1.5; color: #333; }
+:where(.pg-agendas) .politicas-lista li { color: #7a1f17; }
+:where(.pg-agendas) .politicas-check { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+:where(.pg-agendas) .politicas-check input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; }
+:where(.pg-agendas) .modal-cita-principal { background: #1a4a6b; color: #fff; }
+:where(.pg-agendas) .modal-cita-principal:hover { background: #2a6496; }
+:where(.pg-agendas) .modal-cita-error { color: #b3261e; }
+:where(.pg-agendas) .modal-content { max-height: 90vh; overflow-y: auto; }
 
 /* Ventana de confirmación: calendario y enlace de gestión */
 :where(.pg-agendas) .modal-cita { margin: 14px 0; padding: 14px; background: #f3f8fc; border-radius: 10px; text-align: left; }

@@ -102,6 +102,20 @@ de la página, así que guarda el enlace.
 
 Mientras recibes respuestas puedes **Cerrar** la evaluación para que nadie más responda.
 
+### Flujo de una cita
+1. El paciente reserva y **acepta las políticas**. La cita queda **pendiente de aceptación** y la hora se aparta.
+2. Descarga su **comprobante en PDF** (total, medios de pago, indicaciones y políticas); también le llega por correo.
+3. A ti te llega el WhatsApp y un **correo con el botón "Aceptar o rechazar esta cita"**. También puedes
+   hacerlo en Panel → Citas.
+4. Al aceptar, el paciente recibe un correo de confirmación; al rechazar, la hora queda libre.
+5. Cuando el paciente pague, márcala como **💳 Pagada** en el panel (el paciente recibe un correo).
+6. Si 12 horas antes de la cita no está pagada, **se cancela automáticamente** (revisión cada hora;
+   se desactiva con `CANCELAR_SIN_PAGO = false`). Hay 2 horas de margen para quien reserva a última hora.
+7. Si el paciente cancela con menos de 12 horas, se registra la **penalización del 50 %**.
+
+Las políticas e indicaciones están en `POLITICAS` e `INDICACIONES` de `Codigo.gs` (PDF y correos) y de
+`JS/config.js` (página de citas). Si las cambias, cámbialas en los dos lugares.
+
 ### Correos automáticos
 - **Al agendar**: el paciente recibe un correo con los datos de la cita, un botón para agregarla a
   Google Calendar y un enlace para **cambiarla o cancelarla** (hasta 12 horas antes; se cambia en
