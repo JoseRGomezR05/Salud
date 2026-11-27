@@ -11,6 +11,8 @@
  *   Citas           → citas agendadas desde la página
  *   Disponibilidad  → días y horas de atención de cada profesional
  *   Bloqueos        → fechas sin atención (vacaciones, festivos)
+ *   Excepciones     → horario especial de una fecha (por ejemplo, un
+ *                     sábado en que solo se atiende en la tarde)
  *
  * La clave del panel se guarda en las Propiedades del script
  * (CLAVE_ADMIN), nunca en este archivo.
@@ -25,7 +27,10 @@ const HOJAS = {
   Respuestas: ['fecha', 'empresa', 'participante', 'area', 'prueba', 'puntaje', 'nivel', 'respuestas'],
   Citas: ['id', 'creada', 'fecha', 'hora', 'duracion', 'profesional', 'servicios', 'nombre', 'telefono', 'correo', 'mensaje', 'estado'],
   Disponibilidad: ['profesional', 'dia', 'horas'],
-  Bloqueos: ['id', 'fecha', 'profesional', 'motivo']
+  Bloqueos: ['id', 'fecha', 'profesional', 'motivo'],
+  // Horario especial de un día: reemplaza el horario semanal en esa fecha
+  // (horas vacías = no atiende ese día)
+  Excepciones: ['fecha', 'profesional', 'horas', 'motivo']
 };
 
 // ------------------------------------------------------------
@@ -90,7 +95,9 @@ function doPost(e) {
     leerDisponibilidad: leerDisponibilidad,
     guardarDisponibilidad: guardarDisponibilidad,
     agregarBloqueo: agregarBloqueo,
-    eliminarBloqueo: eliminarBloqueo
+    eliminarBloqueo: eliminarBloqueo,
+    guardarExcepcion: guardarExcepcion,
+    eliminarExcepcion: eliminarExcepcion
   };
 
   try {
@@ -124,6 +131,11 @@ function hoja(nombre) {
   const h = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombre);
   if (!h) throw new Error('Falta la hoja "' + nombre + '". Ejecuta la función instalar.');
   return h;
+}
+
+// Igual que leer, pero devuelve [] si la hoja aún no existe
+function leerSiExiste(nombre) {
+  return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombre) ? leer(nombre) : [];
 }
 
 function leer(nombre) {
@@ -340,10 +352,19 @@ function horariosDisponibles(d) {
   const profesional = texto(d.profesional, 120);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !profesional) return { ok: false, error: 'Faltan la fecha o el profesional.' };
 
-  const bloqueo = leer('Bloqueos').find(b => b.fecha === fecha && (b.profesional === profesional || b.profesional === 'Todos'));
-  if (bloqueo) return { ok: true, abierto: false, motivo: bloqueo.motivo || 'No hay atención este día.' };
-
-  const configuradas = horasDelDia(profesional, diaDeSemana(fecha));
+  // 1) Un horario especial para ese día manda sobre todo lo demás
+  const excepcion = leerSiExiste('Excepciones').find(x => x.fecha === fecha && x.profesional === profesional);
+  let configuradas;
+  if (excepcion) {
+    configuradas = excepcion.horas.split(',').map(h => h.trim()).filter(Boolean);
+    if (!configuradas.length) return { ok: true, abierto: false, motivo: excepcion.motivo || 'No hay atención este día.' };
+  } else {
+    // 2) Días bloqueados (festivos, vacaciones)
+    const bloqueo = leer('Bloqueos').find(b => b.fecha === fecha && (b.profesional === profesional || b.profesional === 'Todos'));
+    if (bloqueo) return { ok: true, abierto: false, motivo: bloqueo.motivo || 'No hay atención este día.' };
+    // 3) Horario semanal
+    configuradas = horasDelDia(profesional, diaDeSemana(fecha));
+  }
   const duracion = Math.max(MINUTOS_POR_CITA, parseInt(d.duracion, 10) || MINUTOS_POR_CITA);
   const ocupadas = intervalosOcupados(fecha, profesional);
   const horas = (d.horas || []).map(h => {
@@ -418,7 +439,36 @@ function cambiarEstadoCita(d) {
 }
 
 function leerDisponibilidad() {
-  return { ok: true, disponibilidad: leer('Disponibilidad'), bloqueos: leer('Bloqueos') };
+  return {
+    ok: true,
+    disponibilidad: leer('Disponibilidad'),
+    bloqueos: leer('Bloqueos'),
+    excepciones: leerSiExiste('Excepciones'),
+    excepcionesActivas: !!SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Excepciones')
+  };
+}
+
+// Horario especial de un día. d.horas = [] bloquea el día completo.
+function guardarExcepcion(d) {
+  return conBloqueo(() => {
+    hoja('Excepciones');   // avisa si falta ejecutar instalar
+    const fecha = texto(d.fecha, 10);
+    const profesional = texto(d.profesional, 120);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !profesional) return { ok: false, error: 'Faltan la fecha o el profesional.' };
+    const horas = (d.horas || []).filter(h => aMinutos(h) >= 0);
+    const otras = leer('Excepciones').filter(x => !(x.fecha === fecha && x.profesional === profesional));
+    otras.push({ fecha: fecha, profesional: profesional, horas: horas.join(','), motivo: texto(d.motivo, 200) });
+    reescribir('Excepciones', otras);
+    return { ok: true };
+  });
+}
+
+// Quita el horario especial: el día vuelve al horario semanal
+function eliminarExcepcion(d) {
+  return conBloqueo(() => {
+    reescribir('Excepciones', leer('Excepciones').filter(x => !(x.fecha === d.fecha && x.profesional === d.profesional)));
+    return { ok: true };
+  });
 }
 
 // d.profesional y d.dias = { "1": ["8:00 AM", ...], "2": [...], ... }

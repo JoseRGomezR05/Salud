@@ -5064,6 +5064,74 @@ body.pg-panel > main {
     :where(.pg-panel) .panel-item-acciones { flex: 1 1 100%; }
 }
 
+
+/* Calendario de atención (panel) */
+:where(.pg-panel) .cal-controles { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; justify-content: space-between; margin-bottom: 0.8rem; }
+:where(.pg-panel) .cal-controles label { display: block; font-weight: 600; font-size: 0.9rem; min-width: 240px; }
+:where(.pg-panel) .cal-mes { display: flex; align-items: center; gap: 10px; }
+:where(.pg-panel) .cal-mes strong { min-width: 170px; text-align: center; color: var(--primary); font-size: 1.1rem; }
+:where(.pg-panel) .cal-mes strong::first-letter,
+:where(.pg-panel) .cal-editor h3::first-letter { text-transform: uppercase; }
+:where(.pg-panel) .cal-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+:where(.pg-panel) .cal-color { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+:where(.pg-panel) .cal-color.normal, :where(.pg-panel) .cal-dia.normal { background: #ffffff; }
+:where(.pg-panel) .cal-color.normal { border: 1px solid var(--border); }
+:where(.pg-panel) .cal-color.especial, :where(.pg-panel) .cal-dia.especial { background: #e3f1fb; }
+:where(.pg-panel) .cal-color.cerrado, :where(.pg-panel) .cal-dia.cerrado { background: #eceff3; }
+:where(.pg-panel) .cal-color.festivo, :where(.pg-panel) .cal-dia.festivo { background: #fdecea; }
+
+:where(.pg-panel) .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+:where(.pg-panel) .cal-cabecera { text-align: center; font-weight: 700; font-size: 0.8rem; color: var(--text-muted); padding: 4px 0; }
+:where(.pg-panel) .cal-dia {
+    min-height: 78px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    color: var(--text);
+}
+:where(.pg-panel) .cal-dia:hover:not([disabled]) { border-color: var(--primary-light); }
+:where(.pg-panel) .cal-dia.hoy { border: 2px solid var(--accent); }
+:where(.pg-panel) .cal-dia.elegido { outline: 3px solid var(--primary); outline-offset: 1px; }
+:where(.pg-panel) .cal-dia.pasado { opacity: 0.4; cursor: default; }
+:where(.pg-panel) .cal-numero { font-weight: 700; font-size: 0.95rem; }
+:where(.pg-panel) .cal-etiqueta { font-size: 0.72rem; line-height: 1.25; color: var(--text-muted); }
+:where(.pg-panel) .cal-dia.festivo .cal-etiqueta { color: #b3261e; }
+:where(.pg-panel) .cal-dia.especial .cal-etiqueta { color: var(--primary); font-weight: 600; }
+:where(.pg-panel) .cal-citas { margin-top: auto; font-size: 0.7rem; font-weight: 700; color: #fff; background: var(--accent); border-radius: 8px; padding: 1px 6px; align-self: flex-start; }
+
+:where(.pg-panel) .cal-editor { margin-top: 1.2rem; border-top: 2px solid var(--border); padding-top: 1.2rem; }
+:where(.pg-panel) .cal-editor h3 { color: var(--primary); font-size: 1.1rem; margin: 0 0 0.3rem; }
+:where(.pg-panel) .cal-editor-estado { color: var(--text-muted); margin: 0 0 0.8rem; }
+:where(.pg-panel) .cal-jornadas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 0.8rem; }
+:where(.pg-panel) .cal-jornada {
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+    padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px;
+    background: #fff; font-family: inherit; cursor: pointer; text-align: left; color: var(--text);
+}
+:where(.pg-panel) .cal-jornada span { font-size: 0.8rem; color: var(--text-muted); }
+:where(.pg-panel) .cal-jornada em { font-style: normal; font-size: 0.8rem; font-weight: 700; color: #b3261e; }
+:where(.pg-panel) .cal-jornada.abierta { border-color: #2e9e6f; background: #e3f6ee; }
+:where(.pg-panel) .cal-jornada.abierta em { color: #17694a; }
+:where(.pg-panel) .cal-jornada.parcial { border-color: #e0a100; background: #fff8e1; }
+:where(.pg-panel) .cal-jornada.parcial em { color: #7a5200; }
+:where(.pg-panel) .cal-horas { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 6px; margin-bottom: 1rem; }
+:where(.pg-panel) .cal-hora { display: flex; gap: 6px; align-items: center; font-size: 0.9rem; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; }
+:where(.pg-panel) .cal-todos { align-self: center; }
+
+@media (max-width: 600px) {
+    :where(.pg-panel) .cal-dia { min-height: 58px; padding: 4px; }
+    :where(.pg-panel) .cal-etiqueta { font-size: 0.62rem; }
+    :where(.pg-panel) .cal-citas { font-size: 0.6rem; padding: 0 4px; }
+    :where(.pg-panel) .cal-caja { padding: 1rem; }
+}
+
 /* Al imprimir el informe solo sale el informe */
 @media print {
     body.pg-panel .site-header,

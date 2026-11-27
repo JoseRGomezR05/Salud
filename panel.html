@@ -129,6 +129,57 @@
 
             <!-- DISPONIBILIDAD -->
             <div class="panel-tab" id="tabDisponibilidad" hidden>
+                <!-- Calendario: bloquear o abrir días y jornadas -->
+                <div class="panel-caja">
+                    <h2>📆 Calendario de atención</h2>
+                    <p class="panel-ayuda">Toca un día para cambiar solo ese día: abrir o cerrar la mañana, el mediodía,
+                    la tarde o la noche, o bloquear el día completo. El horario semanal no cambia.</p>
+                    <p class="panel-alerta" id="calSinExcepciones" hidden>
+                        Para usar el calendario, actualiza el código de Google Apps Script
+                        (ver <code>apps-script/INSTRUCCIONES.md</code>, sección "Si cambias el código").
+                    </p>
+                    <div class="cal-controles">
+                        <label>Profesional
+                            <select id="calProfesional"></select>
+                        </label>
+                        <div class="cal-mes">
+                            <button type="button" class="panel-btn" id="calAnterior" aria-label="Mes anterior">‹</button>
+                            <strong id="calTitulo"></strong>
+                            <button type="button" class="panel-btn" id="calSiguiente" aria-label="Mes siguiente">›</button>
+                        </div>
+                    </div>
+                    <div class="cal-leyenda">
+                        <span><i class="cal-color normal"></i> Horario normal</span>
+                        <span><i class="cal-color especial"></i> Horario especial</span>
+                        <span><i class="cal-color cerrado"></i> Sin atención</span>
+                        <span><i class="cal-color festivo"></i> Festivo / bloqueado</span>
+                    </div>
+                    <div class="cal-grid" id="calGrid"></div>
+
+                    <!-- Editor del día elegido -->
+                    <div class="cal-editor" id="calEditor" hidden>
+                        <h3 id="calEditorTitulo"></h3>
+                        <p class="cal-editor-estado" id="calEditorEstado"></p>
+                        <p class="panel-alerta" id="calEditorCitas" hidden></p>
+                        <div class="cal-jornadas" id="calJornadas"></div>
+                        <div class="cal-horas" id="calHoras"></div>
+                        <div class="panel-campos">
+                            <label>Motivo (opcional)
+                                <input type="text" id="calMotivo" placeholder="Ej.: capacitación, cita médica">
+                            </label>
+                            <label class="panel-check cal-todos">
+                                <input type="checkbox" id="calTodos"> Aplicar a todos los profesionales
+                            </label>
+                        </div>
+                        <div class="panel-acciones">
+                            <button type="button" class="panel-btn panel-btn-principal" id="calGuardar">💾 Guardar este día</button>
+                            <button type="button" class="panel-btn panel-btn-peligro" id="calBloquear">🚫 Bloquear todo el día</button>
+                            <button type="button" class="panel-btn" id="calNormal">↺ Volver al horario normal</button>
+                            <button type="button" class="panel-btn" id="calCerrar">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="panel-caja">
                     <h2>Horario semanal</h2>
                     <p class="panel-ayuda">Marca las horas en que cada profesional atiende. Las horas sin marcar

@@ -103,7 +103,11 @@ de la página, así que guarda el enlace.
 Mientras recibes respuestas puedes **Cerrar** la evaluación para que nadie más responda.
 
 ### Horario y citas
-- **Disponibilidad**: elige un profesional y marca las horas en que atiende cada día. Toca el
+- **Calendario de atención** (pestaña Disponibilidad): toca un día del mes para cambiar **solo ese día**:
+  abrir o cerrar ☀️ mañana, 🌤️ mediodía, 🌇 tarde o 🌙 noche, elegir horas sueltas, **bloquear el día
+  completo** o **volver al horario normal**. Sirve también para atender un festivo. Puedes aplicarlo a
+  todos los profesionales a la vez.
+- **Horario semanal**: elige un profesional y marca las horas en que atiende cada día. Toca el
   nombre de un día para marcarlo o desmarcarlo completo. Agrega los **días sin atención** (festivos,
   vacaciones) para uno o para todos los profesionales.
 - **Citas**: ves las próximas citas, las marcas como atendidas o las cancelas (la hora queda libre).
@@ -136,6 +140,11 @@ de protección de datos (Ley 1581 de 2012).
 
 ## Si cambias el código más adelante
 
-Cuando se actualice `Codigo.gs`, pégalo de nuevo en el editor, guarda, y luego
-**Implementar → Gestionar implementaciones → ✏️ Editar → Versión: Nueva versión → Implementar**.
+Cuando se actualice `Codigo.gs`:
+
+1. Borra todo el código del editor, pega el nuevo y **guarda**.
+2. Elige la función **`instalar`** y presiona **▶ Ejecutar**. Crea las hojas nuevas que falten;
+   **no borra datos ni cambia tu clave**.
+3. **Implementar → Gestionar implementaciones → ✏️ Editar → Versión: Nueva versión → Implementar**.
+
 Así la URL sigue siendo la misma y no hay que cambiar `config.js`.

@@ -2552,8 +2552,13 @@ if (pagina('panel')) (function () {
         let r;
         try { r = await api('leerDisponibilidad'); } catch (e) { return; }
         disponibilidad = r.disponibilidad;
+        bloqueosActuales = r.bloqueos;
+        excepciones = r.excepciones || [];
+        excepcionesActivas = !!r.excepcionesActivas;
+        try { citas = (await api('listarCitas')).citas; } catch (e) { /* el calendario funciona sin citas */ }
         pintarHorario();
         pintarBloqueos(r.bloqueos);
+        pintarCalendario();
     }
 
     function pintarHorario() {
@@ -2615,6 +2620,193 @@ if (pagina('panel')) (function () {
             await cargarDisponibilidad();
             estado('✓ Día bloqueado.', 'ok');
         } catch (err) { /* mensaje mostrado */ }
+    });
+
+    // ========== CALENDARIO: horario especial de un día ==========
+    let bloqueosActuales = [];
+    let excepciones = [];
+    let excepcionesActivas = false;
+    let calMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let diaElegido = null;
+
+    const JORNADAS = [
+        { id: 'manana', nombre: '☀️ Mañana', desde: 0, hasta: 720 },
+        { id: 'mediodia', nombre: '🌤️ Mediodía', desde: 720, hasta: 780 },
+        { id: 'tarde', nombre: '🌇 Tarde', desde: 780, hasta: 1080 },
+        { id: 'noche', nombre: '🌙 Noche', desde: 1080, hasta: 1440 }
+    ].map(j => Object.assign(j, { horas: HORAS_CITA.filter(h => aMinutos(h) >= j.desde && aMinutos(h) < j.hasta) }))
+     .filter(j => j.horas.length);
+
+    $('calProfesional').innerHTML = PROFESIONALES.map(p => `<option>${esc(p)}</option>`).join('');
+    $('calProfesional').addEventListener('change', () => { $('calEditor').hidden = true; pintarCalendario(); });
+    $('calAnterior').addEventListener('click', () => { calMes.setMonth(calMes.getMonth() - 1); pintarCalendario(); });
+    $('calSiguiente').addEventListener('click', () => { calMes.setMonth(calMes.getMonth() + 1); pintarCalendario(); });
+
+    function textoFecha(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function horasSemanales(profesional, fecha) {
+        const filas = disponibilidad.filter(d => d.profesional === profesional);
+        const [a, m, d] = fecha.split('-').map(Number);
+        const dia = new Date(a, m - 1, d).getDay();
+        if (!filas.length) return dia === 0 ? [] : HORAS_CITA.slice();
+        const fila = filas.find(f => String(f.dia) === String(dia));
+        return fila ? fila.horas.split(',').filter(Boolean) : [];
+    }
+
+    // Cómo queda un día (mismo orden de prioridad que el servidor)
+    function estadoDia(profesional, fecha) {
+        const excepcion = excepciones.find(x => x.fecha === fecha && x.profesional === profesional);
+        if (excepcion) {
+            const horas = excepcion.horas.split(',').filter(Boolean);
+            return { tipo: horas.length ? 'especial' : 'cerrado', horas, motivo: excepcion.motivo, excepcion: true };
+        }
+        const bloqueo = bloqueosActuales.find(b => b.fecha === fecha && (b.profesional === profesional || b.profesional === 'Todos'));
+        if (bloqueo) return { tipo: 'festivo', horas: [], motivo: bloqueo.motivo || 'Bloqueado', bloqueo };
+        const horas = horasSemanales(profesional, fecha);
+        return { tipo: horas.length ? 'normal' : 'cerrado', horas, motivo: horas.length ? '' : 'No atiende (horario semanal)' };
+    }
+
+    function resumenJornadas(horas) {
+        const nombres = JORNADAS.filter(j => j.horas.some(h => horas.includes(h))).map(j => j.nombre.split(' ')[1]);
+        return nombres.length === JORNADAS.length ? 'Todo el día' : nombres.join(' · ');
+    }
+
+    function citasDelDia(profesional, fecha) {
+        return citas.filter(c => c.fecha === fecha && c.profesional === profesional && c.estado === 'confirmada')
+            .sort((a, b) => aMinutos(a.hora) - aMinutos(b.hora));
+    }
+
+    function pintarCalendario() {
+        $('calSinExcepciones').hidden = excepcionesActivas;
+        const profesional = $('calProfesional').value;
+        const hoy = textoFecha(new Date());
+        $('calTitulo').textContent = calMes.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+
+        let html = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => `<div class="cal-cabecera">${d}</div>`).join('');
+        const vacios = (calMes.getDay() + 6) % 7;   // la semana empieza el lunes
+        for (let i = 0; i < vacios; i++) html += '<div class="cal-vacio"></div>';
+
+        const diasMes = new Date(calMes.getFullYear(), calMes.getMonth() + 1, 0).getDate();
+        for (let d = 1; d <= diasMes; d++) {
+            const fecha = textoFecha(new Date(calMes.getFullYear(), calMes.getMonth(), d));
+            const e = estadoDia(profesional, fecha);
+            const nCitas = citasDelDia(profesional, fecha).length;
+            const etiqueta = e.tipo === 'normal' || e.tipo === 'especial' ? resumenJornadas(e.horas)
+                : e.tipo === 'festivo' ? e.motivo.replace(/^Festivo:\s*/, '')
+                : (e.excepcion && e.motivo ? e.motivo : 'Sin atención');
+            html += `
+                <button type="button" class="cal-dia ${e.tipo}${fecha < hoy ? ' pasado' : ''}${fecha === hoy ? ' hoy' : ''}${fecha === diaElegido ? ' elegido' : ''}"
+                        data-fecha="${fecha}" ${fecha < hoy ? 'disabled' : ''}>
+                    <span class="cal-numero">${d}</span>
+                    <span class="cal-etiqueta">${esc(etiqueta)}</span>
+                    ${nCitas ? `<span class="cal-citas">${nCitas} cita${nCitas > 1 ? 's' : ''}</span>` : ''}
+                </button>`;
+        }
+        $('calGrid').innerHTML = html;
+        $('calGrid').querySelectorAll('.cal-dia:not([disabled])').forEach(b =>
+            b.addEventListener('click', () => abrirDia(b.dataset.fecha)));
+        if (diaElegido && !$('calEditor').hidden) abrirDia(diaElegido);
+    }
+
+    function abrirDia(fecha) {
+        diaElegido = fecha;
+        $('calGrid').querySelectorAll('.cal-dia').forEach(b => b.classList.toggle('elegido', b.dataset.fecha === fecha));
+        const profesional = $('calProfesional').value;
+        const e = estadoDia(profesional, fecha);
+
+        $('calEditor').hidden = false;
+        $('calEditorTitulo').textContent = `${fechaLarga(fecha)} · ${profesional}`;
+        $('calEditorEstado').textContent = {
+            normal: 'Horario normal de la semana: ' + resumenJornadas(e.horas) + '.',
+            especial: 'Horario especial para este día: ' + resumenJornadas(e.horas) + '.',
+            cerrado: (e.excepcion ? 'Día bloqueado manualmente' : 'Sin atención') + (e.motivo ? ': ' + e.motivo : '') + '.',
+            festivo: e.motivo + '. Para atender este día, marca las horas y guarda.'
+        }[e.tipo];
+
+        const deEseDia = citasDelDia(profesional, fecha);
+        $('calEditorCitas').hidden = !deEseDia.length;
+        $('calEditorCitas').textContent = deEseDia.length
+            ? `Hay ${deEseDia.length} cita${deEseDia.length > 1 ? 's' : ''} este día: ` +
+              deEseDia.map(c => `${c.hora} (${c.nombre})`).join(', ') + '. Cerrar horas no cancela estas citas.'
+            : '';
+
+        $('calHoras').innerHTML = HORAS_CITA.map(h =>
+            `<label class="cal-hora"><input type="checkbox" value="${h}" ${e.horas.includes(h) ? 'checked' : ''}> ${h}</label>`).join('');
+        $('calMotivo').value = e.excepcion ? (e.motivo || '') : '';
+        $('calTodos').checked = false;
+        $('calHoras').querySelectorAll('input').forEach(c => c.addEventListener('change', pintarJornadas));
+        pintarJornadas();
+
+        ['calGuardar', 'calBloquear', 'calNormal'].forEach(id => { $(id).disabled = !excepcionesActivas; });
+        $('calNormal').hidden = !(e.excepcion || (e.bloqueo && e.bloqueo.profesional !== 'Todos'));
+        $('calEditor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Botones de jornada: muestran si la jornada está abierta y la abren o cierran completa
+    function pintarJornadas() {
+        const marcadas = [...$('calHoras').querySelectorAll('input:checked')].map(c => c.value);
+        $('calJornadas').innerHTML = JORNADAS.map(j => {
+            const abiertas = j.horas.filter(h => marcadas.includes(h)).length;
+            const clase = abiertas === j.horas.length ? 'abierta' : abiertas ? 'parcial' : '';
+            const texto = abiertas === j.horas.length ? 'Abierta' : abiertas ? `${abiertas} de ${j.horas.length}` : 'Cerrada';
+            return `<button type="button" class="cal-jornada ${clase}" data-jornada="${j.id}">
+                        <strong>${j.nombre}</strong><span>${j.horas.length > 1 ? j.horas[0] + ' – ' + j.horas[j.horas.length - 1] : j.horas[0]}</span><em>${texto}</em>
+                    </button>`;
+        }).join('');
+        $('calJornadas').querySelectorAll('.cal-jornada').forEach(b => b.addEventListener('click', () => {
+            const j = JORNADAS.find(x => x.id === b.dataset.jornada);
+            const casillas = [...$('calHoras').querySelectorAll('input')].filter(c => j.horas.includes(c.value));
+            const abrir = casillas.some(c => !c.checked);
+            casillas.forEach(c => { c.checked = abrir; });
+            pintarJornadas();
+        }));
+    }
+
+    function profesionalesElegidos() {
+        return $('calTodos').checked ? PROFESIONALES : [$('calProfesional').value];
+    }
+
+    async function guardarDia(horas, mensaje) {
+        try {
+            for (const profesional of profesionalesElegidos()) {
+                await api('guardarExcepcion', { fecha: diaElegido, profesional, horas, motivo: $('calMotivo').value });
+            }
+            await cargarDisponibilidad();
+            estado(mensaje, 'ok');
+        } catch (e) { /* mensaje mostrado */ }
+    }
+
+    $('calGuardar').addEventListener('click', () => {
+        const horas = [...$('calHoras').querySelectorAll('input:checked')].map(c => c.value);
+        guardarDia(horas, horas.length ? '✓ Horario especial guardado para ' + fechaLarga(diaElegido) + '.' : '✓ Día bloqueado.');
+    });
+
+    $('calBloquear').addEventListener('click', () => {
+        if (!confirm('¿Bloquear todo el ' + fechaLarga(diaElegido) + '? Nadie podrá agendar ese día.')) return;
+        guardarDia([], '✓ Día bloqueado: ' + fechaLarga(diaElegido) + '.');
+    });
+
+    $('calNormal').addEventListener('click', async () => {
+        const profesional = $('calProfesional').value;
+        const e = estadoDia(profesional, diaElegido);
+        try {
+            for (const p of profesionalesElegidos()) {
+                await api('eliminarExcepcion', { fecha: diaElegido, profesional: p });
+            }
+            if (!e.excepcion && e.bloqueo && e.bloqueo.profesional !== 'Todos') {
+                await api('eliminarBloqueo', { id: e.bloqueo.id });
+            }
+            await cargarDisponibilidad();
+            estado('✓ El día volvió al horario normal.', 'ok');
+        } catch (err) { /* mensaje mostrado */ }
+    });
+
+    $('calCerrar').addEventListener('click', () => {
+        $('calEditor').hidden = true;
+        diaElegido = null;
+        pintarCalendario();
     });
 
     // Si ya había iniciado sesión en esta pestaña, entrar directo
