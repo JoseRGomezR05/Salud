@@ -59,6 +59,7 @@
 
             <nav class="panel-tabs no-imprimir" role="tablist">
                 <button type="button" class="panel-tab-btn activo" data-tab="empresas" role="tab">🏢 Empresas</button>
+                <button type="button" class="panel-tab-btn" data-tab="resumen" role="tab">📊 Resumen</button>
                 <button type="button" class="panel-tab-btn" data-tab="citas" role="tab">📅 Citas</button>
                 <button type="button" class="panel-tab-btn" data-tab="disponibilidad" role="tab">🕒 Disponibilidad</button>
             </nav>
@@ -108,6 +109,20 @@
                     <button type="button" class="panel-btn panel-btn-peligro" id="informeBorrar">🗑️ Borrar resultados</button>
                 </div>
                 <div id="informe" class="informe"></div>
+            </div>
+
+            <!-- RESUMEN SEMANAL -->
+            <div class="panel-tab" id="tabResumen" hidden>
+                <div class="panel-filtros">
+                    <div class="cal-mes">
+                        <button type="button" class="panel-btn" id="resAnterior" aria-label="Semana anterior">‹</button>
+                        <strong id="resTitulo"></strong>
+                        <button type="button" class="panel-btn" id="resSiguiente" aria-label="Semana siguiente">›</button>
+                    </div>
+                    <button type="button" class="panel-btn" id="resHoy">Esta semana</button>
+                    <button type="button" class="panel-btn" id="resRecargar">↻ Actualizar</button>
+                </div>
+                <div id="resumenSemana"></div>
             </div>
 
             <!-- CITAS -->

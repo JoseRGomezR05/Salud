@@ -85,6 +85,59 @@ function esc(valor) {
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// "8:45 AM" → minutos desde la medianoche
+function minutosDeHora(hora) {
+    const m = String(hora).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return 0;
+    return (parseInt(m[1], 10) % 12 + (m[3].toUpperCase() === 'PM' ? 12 : 0)) * 60 + parseInt(m[2], 10);
+}
+
+// Enlace para agregar una cita a Google Calendar (hora de Colombia)
+// cita = { fecha: '2026-12-01', hora: '6:00 PM', duracion: 60, profesional, servicios }
+function enlaceGoogleCalendar(cita, detalle = '') {
+    const formato = minutos => cita.fecha.replace(/-/g, '') + 'T' +
+        String(Math.floor(minutos / 60)).padStart(2, '0') + String(minutos % 60).padStart(2, '0') + '00';
+    const inicio = minutosDeHora(cita.hora);
+    const fin = inicio + (parseInt(cita.duracion, 10) || 60);
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent('Cita con ' + cita.profesional + ' - Bienestar Emocional') +
+        '&dates=' + formato(inicio) + '/' + formato(fin) +
+        '&ctz=America%2FBogota' +
+        '&details=' + encodeURIComponent((cita.servicios || '') + (detalle ? '\n' + detalle : ''));
+}
+
+// Descarga un archivo .ics (iPhone, Android, Outlook). Colombia es UTC-5 todo el año.
+function descargarICS(cita, detalle = '') {
+    const [a, m, d] = cita.fecha.split('-').map(Number);
+    const inicio = minutosDeHora(cita.hora);
+    const utc = minutos => {
+        const f = new Date(Date.UTC(a, m - 1, d, 0, minutos + 5 * 60));
+        return f.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+    const limpiar = t => String(t || '').replace(/[\\,;]/g, ' ').replace(/\n/g, '\\n');
+    const ics = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Bienestar Emocional//Citas//ES', 'BEGIN:VEVENT',
+        'UID:' + Date.now() + '@bienestar-emocional',
+        'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''),
+        'DTSTART:' + utc(inicio),
+        'DTEND:' + utc(inicio + (parseInt(cita.duracion, 10) || 60)),
+        'SUMMARY:' + limpiar('Cita con ' + cita.profesional + ' - Bienestar Emocional'),
+        'DESCRIPTION:' + limpiar((cita.servicios || '') + (detalle ? '\n' + detalle : '')),
+        'BEGIN:VALARM', 'TRIGGER:-PT2H', 'ACTION:DISPLAY', 'DESCRIPTION:Recordatorio de tu cita', 'END:VALARM',
+        'END:VEVENT', 'END:VCALENDAR'
+    ].join('\r\n');
+    const enlace = document.createElement('a');
+    enlace.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    enlace.download = 'cita-bienestar-emocional.ics';
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(() => URL.revokeObjectURL(enlace.href), 5000);
+}
+
+// Texto de por qué una hora no está disponible
+const MOTIVOS_HORA = { ocupada: 'ocupada', 'no alcanza': 'no alcanza', 'no disponible': 'no disponible', 'ya pasó': 'ya pasó' };
+
 // Muestra un mensaje de error debajo de un campo (en lugar de alert)
 function mostrarAviso(campo, mensaje) {
     if (!campo) return;
@@ -426,8 +479,28 @@ if (pagina('agendas')) (function () {
         const message = generateWhatsAppMessage(formData);
         const whatsappUrl = `https://wa.me/${selectedProfessionalPhone}?text=${message}`;
 
-        // Mostrar confirmación y limpiar el formulario
-        function finalizarReserva() {
+        const citaReservada = {
+            fecha: formData.date,
+            hora: formData.time,
+            duracion: duracionTotal(),
+            profesional: selectedProfessional,
+            servicios: getSelectedServicesText().replace(/\n• /g, ', ')
+        };
+
+        // Mostrar confirmación (con calendario y enlace de gestión) y limpiar el formulario
+        function finalizarReserva(respuesta) {
+            const enlaceGestion = respuesta && respuesta.token
+                ? new URL(`cita.html?id=${encodeURIComponent(respuesta.id)}&t=${encodeURIComponent(respuesta.token)}`,
+                    location.protocol.startsWith('http') ? location.href : SITIO_URL).href
+                : '';
+            const detalle = enlaceGestion ? 'Cambiar o cancelar: ' + enlaceGestion : '';
+            document.getElementById('modalResumen').textContent =
+                `${formatDate(citaReservada.fecha)} a las ${citaReservada.hora} con ${citaReservada.profesional}. Recuerda llegar 15 minutos antes.`;
+            document.getElementById('modalCita').hidden = false;
+            document.getElementById('modalGoogle').href = enlaceGoogleCalendar(citaReservada, detalle);
+            document.getElementById('modalIcs').onclick = () => descargarICS(citaReservada, detalle);
+            document.getElementById('modalGestion').hidden = !enlaceGestion;
+            document.getElementById('modalEnlace').href = enlaceGestion || '#';
             showModal();
             appointmentForm.reset();
             serviceCards.forEach(card => card.classList.remove('selected'));
@@ -459,6 +532,7 @@ if (pagina('agendas')) (function () {
             duracion: duracionTotal(),
             profesional: selectedProfessional,
             servicios: getSelectedServicesText().replace(/\n• /g, ', '),
+            valor: calculateTotalPrice(),
             nombre: formData.name,
             telefono: formData.phone,
             correo: formData.email,
@@ -472,7 +546,7 @@ if (pagina('agendas')) (function () {
             }
             if (ventana) ventana.location.href = whatsappUrl;
             else window.open(whatsappUrl, '_blank');
-            finalizarReserva();
+            finalizarReserva(r);
         }).catch(() => {
             // Si la base de datos no responde, la cita igual se envía por WhatsApp
             if (ventana) ventana.location.href = whatsappUrl;
@@ -582,7 +656,8 @@ if (pagina('agendas')) (function () {
                     const opcion = opciones.find(o => o.value === h.hora);
                     if (opcion && !h.libre) {
                         opcion.disabled = true;
-                        opcion.textContent = h.hora + (h.habilitada ? ' (ocupada)' : ' (no disponible)');
+                        const motivo = MOTIVOS_HORA[h.motivo] || (h.habilitada ? 'ocupada' : 'no disponible');
+                        opcion.textContent = `${h.hora} (${motivo})`;
                     }
                 });
                 if (!opciones.some(o => !o.disabled)) {
@@ -1325,7 +1400,7 @@ if (pagina('pagos')) (function () {
 // PRUEBA PSICOLÓGICA (prueba.html?p=<clave>)
 // ============================================================
 // Las preguntas de cada prueba están en JS/pruebas-datos.js.
-if (pagina('prueba') && !pagina('dibujo') && !pagina('evaluacion')) (function () {
+if (pagina('prueba') && !pagina('dibujo') && !pagina('evaluacion') && !pagina('cita')) (function () {
     const clave = new URLSearchParams(location.search).get('p');
     const prueba = (typeof PRUEBAS !== 'undefined' && Object.prototype.hasOwnProperty.call(PRUEBAS, clave))
         ? PRUEBAS[clave] : null;
@@ -2218,11 +2293,12 @@ if (pagina('panel')) (function () {
     // ---------- Pestañas ----------
     function mostrarTab(nombre) {
         document.querySelectorAll('.panel-tab-btn').forEach(b => b.classList.toggle('activo', b.dataset.tab === nombre));
-        ['empresas', 'informe', 'citas', 'disponibilidad'].forEach(t => {
+        ['empresas', 'informe', 'resumen', 'citas', 'disponibilidad'].forEach(t => {
             $('tab' + t.charAt(0).toUpperCase() + t.slice(1)).hidden = t !== nombre;
         });
         if (nombre === 'empresas') cargarEmpresas();
         if (nombre === 'citas') cargarCitas();
+        if (nombre === 'resumen') cargarResumen();
         if (nombre === 'disponibilidad') cargarDisponibilidad();
     }
     document.querySelectorAll('.panel-tab-btn').forEach(b => b.addEventListener('click', () => mostrarTab(b.dataset.tab)));
@@ -2331,7 +2407,7 @@ if (pagina('panel')) (function () {
         try { r = await api('resultados', { codigo }); } catch (e) { return; }
         informeActual = r;
         document.querySelectorAll('.panel-tab-btn').forEach(b => b.classList.remove('activo'));
-        ['Empresas', 'Citas', 'Disponibilidad'].forEach(t => { $('tab' + t).hidden = true; });
+        ['Empresas', 'Resumen', 'Citas', 'Disponibilidad'].forEach(t => { $('tab' + t).hidden = true; });
         $('tabInforme').hidden = false;
         $('informe').innerHTML = construirInforme(r.empresa, r.respuestas);
         window.scrollTo({ top: 0 });
@@ -2622,6 +2698,107 @@ if (pagina('panel')) (function () {
         } catch (err) { /* mensaje mostrado */ }
     });
 
+    // ========== RESUMEN SEMANAL ==========
+    function lunesDe(fecha) {
+        const d = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+        d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+        return d;
+    }
+    let resLunes = lunesDe(new Date());
+
+    function fechaISO(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Valor de la cita: el guardado al agendar o, en citas antiguas, el que aparece en el texto de servicios
+    function valorCita(c) {
+        if (Number(c.valor)) return Number(c.valor);
+        return (String(c.servicios).match(/\$\s?[\d.]+/g) || [])
+            .reduce((suma, t) => suma + (parseInt(t.replace(/\D/g, ''), 10) || 0), 0);
+    }
+
+    const pesos = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+
+    $('resAnterior').addEventListener('click', () => { resLunes.setDate(resLunes.getDate() - 7); pintarResumen(); });
+    $('resSiguiente').addEventListener('click', () => { resLunes.setDate(resLunes.getDate() + 7); pintarResumen(); });
+    $('resHoy').addEventListener('click', () => { resLunes = lunesDe(new Date()); pintarResumen(); });
+    $('resRecargar').addEventListener('click', () => cargarResumen());
+
+    async function cargarResumen() {
+        try { citas = (await api('listarCitas')).citas; } catch (e) { return; }
+        pintarResumen();
+    }
+
+    function pintarResumen() {
+        const domingo = new Date(resLunes);
+        domingo.setDate(domingo.getDate() + 6);
+        const desde = fechaISO(resLunes), hasta = fechaISO(domingo);
+        const opciones = { day: 'numeric', month: 'short' };
+        $('resTitulo').textContent = `${resLunes.toLocaleDateString('es-CO', opciones)} – ${domingo.toLocaleDateString('es-CO', opciones)} ${domingo.getFullYear()}`;
+
+        const semana = citas.filter(c => c.fecha >= desde && c.fecha <= hasta);
+        const activas = semana.filter(c => c.estado !== 'cancelada');
+        const atendidas = semana.filter(c => c.estado === 'atendida');
+        const pendientes = semana.filter(c => c.estado === 'confirmada');
+        const canceladas = semana.filter(c => c.estado === 'cancelada');
+        const suma = lista => lista.reduce((t, c) => t + valorCita(c), 0);
+
+        const tarjeta = (valor, texto, clase = '') => `<div class="res-tarjeta ${clase}"><strong>${valor}</strong><span>${texto}</span></div>`;
+        let html = '<div class="res-tarjetas">' +
+            tarjeta(activas.length, 'citas agendadas') +
+            tarjeta(atendidas.length, 'atendidas', 'ok') +
+            tarjeta(pendientes.length, 'por atender', 'azul') +
+            tarjeta(canceladas.length, 'canceladas', 'gris') +
+            tarjeta(pesos(suma(atendidas)), 'ingresos de citas atendidas', 'ok') +
+            tarjeta(pesos(suma(pendientes)), 'ingresos por confirmar', 'azul') +
+            '</div>';
+
+        if (!semana.length) {
+            $('resumenSemana').innerHTML = html + '<p class="panel-vacio">No hay citas en esta semana.</p>';
+            return;
+        }
+
+        // Por profesional
+        html += '<div class="panel-caja"><h2>Por profesional</h2><table class="informe-tabla"><thead><tr>' +
+            '<th>Profesional</th><th>Agendadas</th><th>Atendidas</th><th>Canceladas</th><th>Ingresos atendidas</th></tr></thead><tbody>' +
+            PROFESIONALES.map(p => {
+                const deP = semana.filter(c => c.profesional === p);
+                return `<tr><td>${esc(p)}</td><td>${deP.filter(c => c.estado !== 'cancelada').length}</td>` +
+                    `<td>${deP.filter(c => c.estado === 'atendida').length}</td><td>${deP.filter(c => c.estado === 'cancelada').length}</td>` +
+                    `<td>${pesos(suma(deP.filter(c => c.estado === 'atendida')))}</td></tr>`;
+            }).join('') + '</tbody></table></div>';
+
+        // Por día
+        const maximo = Math.max(1, ...[0, 1, 2, 3, 4, 5, 6].map(i => {
+            const d = new Date(resLunes); d.setDate(d.getDate() + i);
+            return activas.filter(c => c.fecha === fechaISO(d)).length;
+        }));
+        html += '<div class="panel-caja"><h2>Citas por día</h2><div class="res-dias">' +
+            [0, 1, 2, 3, 4, 5, 6].map(i => {
+                const d = new Date(resLunes); d.setDate(d.getDate() + i);
+                const n = activas.filter(c => c.fecha === fechaISO(d)).length;
+                return `<div class="res-dia"><span>${DIAS[d.getDay()].slice(0, 3)} ${d.getDate()}</span>` +
+                    `<div class="res-barra"><i style="width:${n / maximo * 100}%"></i></div><strong>${n}</strong></div>`;
+            }).join('') + '</div></div>';
+
+        // Servicios más pedidos
+        const conteo = {};
+        activas.forEach(c => String(c.servicios).split(',').forEach(t => {
+            const nombre = t.replace(/\(.*?\)/g, '').trim();
+            if (nombre) conteo[nombre] = (conteo[nombre] || 0) + 1;
+        }));
+        const servicios = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+        if (servicios.length) {
+            html += '<div class="panel-caja"><h2>Servicios más pedidos</h2><ol class="res-servicios">' +
+                servicios.slice(0, 5).map(([n, c]) => `<li>${esc(n)} <strong>(${c})</strong></li>`).join('') + '</ol></div>';
+        }
+
+        if (pendientes.some(c => c.fecha < fechaISO(new Date()))) {
+            html += '<p class="panel-alerta">Hay citas pasadas que siguen como "por atender". Márcalas como atendidas en la pestaña Citas para que el resumen sea exacto.</p>';
+        }
+        $('resumenSemana').innerHTML = html;
+    }
+
     // ========== CALENDARIO: horario especial de un día ==========
     let bloqueosActuales = [];
     let excepciones = [];
@@ -2811,4 +2988,140 @@ if (pagina('panel')) (function () {
 
     // Si ya había iniciado sesión en esta pestaña, entrar directo
     if (clave && apiActiva()) entrar();
+})();
+
+
+// ============================================================
+// MI CITA: ver, cambiar o cancelar (cita.html?id=...&t=...)
+// ============================================================
+if (pagina('cita')) (async function () {
+    const $ = id => document.getElementById(id);
+    const parametros = new URLSearchParams(location.search);
+    const id = parametros.get('id') || '';
+    const token = parametros.get('t') || '';
+    let cita = null;
+
+    function mensaje(texto, tipo) {
+        $('citaMensaje').textContent = texto;
+        $('citaMensaje').hidden = !texto;
+        $('citaMensaje').className = 'aviso-prueba' + (tipo ? ' cita-mensaje-' + tipo : '');
+    }
+
+    function fechaLarga(fecha) {
+        const [a, m, d] = fecha.split('-').map(Number);
+        const texto = new Date(a, m - 1, d).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function detalleGestion() {
+        return 'Cambiar o cancelar: ' + location.href;
+    }
+
+    async function cargar() {
+        if (!apiActiva()) { $('citaTitulo').textContent = 'Servicio no disponible'; return mensaje('La gestión de citas todavía no está configurada.', 'error'); }
+        if (!id || !token) { $('citaTitulo').textContent = 'Enlace incompleto'; return mensaje('Usa el enlace que te enviamos por correo.', 'error'); }
+        let r;
+        try { r = await llamarAPI('verCita', { id, token }); }
+        catch (e) { $('citaTitulo').textContent = 'Sin conexión'; return mensaje('No se pudo conectar. Revisa tu internet e intenta de nuevo.', 'error'); }
+        if (!r.ok) { $('citaTitulo').textContent = 'Cita no encontrada'; return mensaje(r.error, 'error'); }
+
+        cita = r.cita;
+        $('citaTitulo').textContent = 'Hola, ' + cita.nombre.split(' ')[0];
+        $('citaSubtitulo').textContent = 'Estos son los datos de tu cita.';
+        $('citaFecha').textContent = fechaLarga(cita.fecha);
+        $('citaHora').textContent = cita.hora;
+        $('citaProfesional').textContent = cita.profesional;
+        $('citaServicios').textContent = cita.servicios;
+        const estados = { confirmada: 'Confirmada', cancelada: 'Cancelada', atendida: 'Atendida' };
+        $('citaEstado').textContent = estados[cita.estado] || cita.estado;
+        $('citaEstado').className = 'cita-estado ' + cita.estado;
+
+        const activa = cita.estado === 'confirmada';
+        $('citaCalendario').hidden = !activa;
+        $('citaGoogle').href = enlaceGoogleCalendar(cita, detalleGestion());
+        $('citaGestion').hidden = !(activa && r.puedeCambiar);
+        $('citaNota').textContent = !activa ? 'Si quieres una nueva cita, puedes agendarla en nuestra página.'
+            : r.puedeCambiar ? `Puedes cambiar o cancelar tu cita en línea hasta ${r.horasMinimas} horas antes.`
+            : `Faltan menos de ${r.horasMinimas} horas para tu cita, así que ya no se puede cambiar en línea. Escríbenos por WhatsApp.`;
+        $('citaDetalle').hidden = false;
+        $('citaCambio').hidden = true;
+    }
+
+    $('citaIcs').addEventListener('click', () => descargarICS(cita, detalleGestion()));
+
+    // Cancelar
+    $('citaCancelar').addEventListener('click', async () => {
+        if (!confirm('¿Seguro que quieres cancelar tu cita? La hora quedará libre para otra persona.')) return;
+        $('citaCancelar').disabled = true;
+        try {
+            const r = await llamarAPI('cancelarCita', { id, token });
+            if (!r.ok) throw new Error(r.error);
+            await cargar();
+            mensaje('✓ Tu cita fue cancelada. Te enviamos un correo de confirmación.', 'ok');
+        } catch (e) {
+            mensaje(/fetch/i.test(e.message) ? 'No se pudo conectar. Intenta de nuevo.' : e.message, 'error');
+        } finally { $('citaCancelar').disabled = false; }
+    });
+
+    // Cambiar
+    const hoy = new Date();
+    $('nuevaFecha').min = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+
+    $('citaCambiar').addEventListener('click', () => {
+        $('citaDetalle').hidden = true;
+        $('citaCambio').hidden = false;
+        mensaje('');
+    });
+    $('citaVolver').addEventListener('click', () => { $('citaCambio').hidden = true; $('citaDetalle').hidden = false; });
+
+    let consulta = 0;
+    $('nuevaFecha').addEventListener('change', async () => {
+        const select = $('nuevaHora');
+        $('citaConfirmarCambio').disabled = true;
+        quitarAviso(select);
+        if (!$('nuevaFecha').value) return;
+        const actual = ++consulta;
+        select.disabled = true;
+        select.innerHTML = '<option value="">Buscando horas libres...</option>';
+        try {
+            const r = await llamarAPI('horarios', {
+                fecha: $('nuevaFecha').value, profesional: cita.profesional, duracion: cita.duracion,
+                horas: HORAS_CITA, excluirId: id
+            });
+            if (actual !== consulta) return;
+            if (!r.ok) throw new Error(r.error);
+            if (!r.abierto) {
+                select.innerHTML = '<option value="">Sin atención este día</option>';
+                return mostrarAviso(select, r.motivo || 'No hay atención este día. Elige otra fecha.');
+            }
+            const libres = r.horas.filter(h => h.libre);
+            select.innerHTML = '<option value="">Selecciona una hora</option>' + r.horas.map(h =>
+                `<option value="${esc(h.hora)}" ${h.libre ? '' : 'disabled'}>${esc(h.hora)}${h.libre ? '' : ' (' + esc(MOTIVOS_HORA[h.motivo] || 'no disponible') + ')'}</option>`).join('');
+            select.disabled = false;
+            if (!libres.length) mostrarAviso(select, 'No quedan horas libres este día. Prueba otra fecha.');
+        } catch (e) {
+            select.innerHTML = '<option value="">Error al buscar horas</option>';
+            mostrarAviso(select, 'No se pudieron consultar las horas. Intenta de nuevo.');
+        }
+    });
+    $('nuevaHora').addEventListener('change', () => { $('citaConfirmarCambio').disabled = !$('nuevaHora').value; });
+
+    $('citaConfirmarCambio').addEventListener('click', async () => {
+        const boton = $('citaConfirmarCambio');
+        boton.disabled = true;
+        boton.textContent = 'Cambiando...';
+        try {
+            const r = await llamarAPI('reprogramarCita', { id, token, fecha: $('nuevaFecha').value, hora: $('nuevaHora').value });
+            if (!r.ok) throw new Error(r.error);
+            await cargar();
+            mensaje('✓ Tu cita fue cambiada. Te enviamos un correo con los nuevos datos.', 'ok');
+        } catch (e) {
+            mostrarAviso($('nuevaHora'), /fetch/i.test(e.message) ? 'No se pudo conectar. Intenta de nuevo.' : e.message);
+            $('nuevaFecha').dispatchEvent(new Event('change'));
+        } finally {
+            boton.textContent = 'Confirmar cambio';
+        }
+    });
+
+    cargar();
 })();

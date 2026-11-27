@@ -102,6 +102,21 @@ de la página, así que guarda el enlace.
 
 Mientras recibes respuestas puedes **Cerrar** la evaluación para que nadie más responda.
 
+### Correos automáticos
+- **Al agendar**: el paciente recibe un correo con los datos de la cita, un botón para agregarla a
+  Google Calendar y un enlace para **cambiarla o cancelarla** (hasta 12 horas antes; se cambia en
+  `HORAS_MINIMAS_CAMBIO` de `Codigo.gs`).
+- **Un día antes**: todos los días a las 7 a. m. se envía un recordatorio a quienes tienen cita al día siguiente.
+- **Si el paciente cambia o cancela**: recibe un correo, y tú recibes un aviso en tu Gmail
+  (se desactiva poniendo `AVISAR_AL_DUENO = false`).
+- Los correos salen desde tu Gmail. El plan gratis permite **100 correos al día**.
+- Para probar: en Apps Script elige la función **`probarCorreo`** → **▶ Ejecutar**. Te llega un correo de ejemplo.
+
+### Resumen semanal
+Panel → **📊 Resumen**: citas agendadas, atendidas, por atender y canceladas; ingresos de las citas
+atendidas y por confirmar; detalle por profesional, por día y los servicios más pedidos. Marca las citas
+como **Atendida** en la pestaña Citas para que los ingresos sean exactos.
+
 ### Horario y citas
 - **Calendario de atención** (pestaña Disponibilidad): toca un día del mes para cambiar **solo ese día**:
   abrir o cerrar ☀️ mañana, 🌤️ mediodía, 🌇 tarde o 🌙 noche, elegir horas sueltas, **bloquear el día
@@ -143,8 +158,9 @@ de protección de datos (Ley 1581 de 2012).
 Cuando se actualice `Codigo.gs`:
 
 1. Borra todo el código del editor, pega el nuevo y **guarda**.
-2. Elige la función **`instalar`** y presiona **▶ Ejecutar**. Crea las hojas nuevas que falten;
-   **no borra datos ni cambia tu clave**.
+2. Elige la función **`instalar`** y presiona **▶ Ejecutar**. Crea las hojas y columnas nuevas que
+   falten y el activador de recordatorios; **no borra datos ni cambia tu clave**. Si Google vuelve a
+   pedir permisos (por ejemplo para enviar correos), acéptalos igual que la primera vez.
 3. **Implementar → Gestionar implementaciones → ✏️ Editar → Versión: Nueva versión → Implementar**.
 
 Así la URL sigue siendo la misma y no hay que cambiar `config.js`.

@@ -186,7 +186,18 @@
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2>¡Gracias por agendar tu cita!</h2>
-            <p>Recuerda asistir 15 minutos antes a tu cita.</p>
+            <p id="modalResumen">Recuerda asistir 15 minutos antes a tu cita.</p>
+            <div class="modal-cita" id="modalCita" hidden>
+                <p class="modal-cita-texto">Guarda tu cita en el calendario para no olvidarla:</p>
+                <div class="modal-cita-botones">
+                    <a id="modalGoogle" class="modal-cita-btn" target="_blank" rel="noopener">📅 Google Calendar</a>
+                    <button type="button" id="modalIcs" class="modal-cita-btn">📲 Calendario del celular</button>
+                </div>
+                <div id="modalGestion" hidden>
+                    <p class="modal-cita-texto">Te enviamos un correo de confirmación. Para cambiar o cancelar tu cita usa este enlace:</p>
+                    <a id="modalEnlace" class="modal-cita-enlace" target="_blank" rel="noopener">Cambiar o cancelar mi cita</a>
+                </div>
+            </div>
             <p>Te contactaremos pronto para confirmar los detalles.</p>
             <button onclick="closeModal()">Aceptar</button>
         </div>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Consulta, cambia o cancela tu cita.">
+    <link rel="icon" type="image/jpeg" href="img/logo.jpeg">
+    <title>Mi Cita | Bienestar Emocional</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="CSS/estilos.css">
+</head>
+<body class="pg pg-prueba pg-cita">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="index.html" class="site-brand">
+                <span class="site-title">Bienestar Emocional</span>
+                <span class="site-tagline">Tu camino hacia el equilibrio mental y emocional</span>
+            </a>
+            <button class="site-menu-btn" type="button" aria-label="Abrir menú" aria-expanded="false">&#9776;</button>
+            <nav class="site-nav">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="perfil.html">Perfil Profesional</a></li>
+                    <li><a href="Agendas.html">Agendar Cita</a></li>
+                    <li><a href="virtual.html">Atención Virtual</a></li>
+                    <li><a href="pruebas.html">Pruebas</a></li>
+                    <li><a href="organizaciones.html">Organizaciones</a></li>
+                    <li><a href="pagos2.html">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <p class="prueba-categoria">Tu cita</p>
+            <h1 id="citaTitulo">Cargando tu cita...</h1>
+            <p class="subtitle" id="citaSubtitulo"></p>
+
+            <div class="aviso-prueba" id="citaMensaje" role="status" hidden></div>
+
+            <!-- Detalle de la cita -->
+            <section id="citaDetalle" hidden>
+                <dl class="cita-resumen">
+                    <div><dt>📅 Fecha</dt><dd id="citaFecha"></dd></div>
+                    <div><dt>⏰ Hora</dt><dd id="citaHora"></dd></div>
+                    <div><dt>👤 Profesional</dt><dd id="citaProfesional"></dd></div>
+                    <div><dt>🩺 Servicio</dt><dd id="citaServicios"></dd></div>
+                    <div><dt>Estado</dt><dd><span class="cita-estado" id="citaEstado"></span></dd></div>
+                </dl>
+
+                <div class="cita-acciones" id="citaCalendario">
+                    <a id="citaGoogle" class="cita-btn" target="_blank" rel="noopener">📅 Agregar a Google Calendar</a>
+                    <button type="button" id="citaIcs" class="cita-btn">📲 Calendario del celular</button>
+                </div>
+
+                <div class="cita-acciones" id="citaGestion" hidden>
+                    <button type="button" id="citaCambiar" class="cita-btn cita-btn-principal">🔄 Cambiar fecha u hora</button>
+                    <button type="button" id="citaCancelar" class="cita-btn cita-btn-peligro">✕ Cancelar mi cita</button>
+                </div>
+                <p class="cita-nota" id="citaNota"></p>
+            </section>
+
+            <!-- Cambiar la cita -->
+            <section id="citaCambio" class="patient-info-section" hidden>
+                <h3>Elige la nueva fecha y hora</h3>
+                <div class="form-group">
+                    <label for="nuevaFecha">Nueva fecha:</label>
+                    <input type="date" id="nuevaFecha">
+                </div>
+                <div class="form-group">
+                    <label for="nuevaHora">Nueva hora:</label>
+                    <select id="nuevaHora" disabled>
+                        <option value="">Primero elige una fecha</option>
+                    </select>
+                </div>
+                <div class="cita-acciones">
+                    <button type="button" id="citaConfirmarCambio" class="cita-btn cita-btn-principal" disabled>Confirmar cambio</button>
+                    <button type="button" id="citaVolver" class="cita-btn">Volver</button>
+                </div>
+            </section>
+
+            <p class="eval-apoyo">¿Tienes dudas? Escríbenos por
+                <a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a>.</p>
+
+            <div class="lineas-ayuda">
+                <strong>¿Necesitas ayuda urgente?</strong> Línea 192 opción 4 · Línea 106 · Emergencias 123
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div>
+                <h4>Bienestar Emocional</h4>
+                <p>Atención psicológica profesional, presencial y virtual.</p>
+                <p>Colombia</p>
+            </div>
+            <div>
+                <h4>Contacto</h4>
+                <p><a href="tel:+573004804521">300 480 4521</a></p>
+                <p><a href="mailto:rafa-0512@hotmail.com">rafa-0512@hotmail.com</a></p>
+            </div>
+            <div>
+                <h4>Síguenos</h4>
+                <p><a href="https://www.facebook.com/profile.php?id=61569775550638" target="_blank" rel="noopener">Facebook</a></p>
+                <p><a href="https://wa.me/573004804521" target="_blank" rel="noopener">WhatsApp</a></p>
+            </div>
+        </div>
+        <p class="site-footer-bottom">&copy; <span class="site-year">2024</span> Bienestar Emocional. Todos los derechos reservados.</p>
+    </footer>
+    <script src="JS/config.js"></script>
+    <script src="JS/main.js"></script>
+</body>
+</html>
