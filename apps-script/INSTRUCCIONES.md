@@ -147,22 +147,38 @@ como **Atendida** en la pestaña Citas para que los ingresos sean exactos.
 
 ## Asistente con inteligencia artificial (virtual.html)
 
-El asistente de orientación usa la API de Claude (Anthropic). **Tiene costo por uso** y se paga con una
-cuenta de Anthropic; sin la clave, la página funciona pero el asistente responde que no está activado
-(la detección de crisis y la lista de profesionales sí funcionan).
+El asistente puede usar **Gemini (Google)** o **Claude (Anthropic)**. El script elige solo:
+si existe la propiedad `GEMINI_API_KEY` usa Gemini; si no, usa Claude con `ANTHROPIC_API_KEY`.
+Sin ninguna clave, la página funciona pero el asistente dice que no está activado (la detección de
+crisis y la lista de profesionales sí funcionan).
 
-1. Crea una cuenta en <https://platform.claude.com>, agrega un método de pago y crea una **API key**
-   (empieza por `sk-ant-`).
+### Opción A: Gemini (tiene plan gratuito)
+1. Entra a <https://aistudio.google.com> con tu cuenta de Google → **Get API key** → **Crear clave**.
+   (Si ya usas Gemini en otro script, puedes usar la misma clave.)
 2. En Apps Script: **⚙️ Configuración del proyecto → Propiedades del script → Agregar propiedad**:
-   - Propiedad: `ANTHROPIC_API_KEY`
-   - Valor: tu clave
+   `GEMINI_API_KEY` = tu clave.
 3. Ejecuta **`probarIA`**: en el registro debe aparecer una respuesta del asistente.
 
-**La clave nunca va en la página ni en GitHub**: solo en las Propiedades del script.
+El modelo se cambia en `MODELO_GEMINI` (por defecto `gemini-3.8-flash`). Los límites gratuitos de
+mensajes por minuto y por día se ven en <https://aistudio.google.com/rate-limit>.
 
-**Costo aproximado:** unos USD 0,01 a 0,03 por mensaje con el modelo `claude-opus-5-5`.
-`IA_MAX_MENSAJES_DIA` (300 por defecto) limita el gasto diario; puedes bajarlo. En la consola de
-Anthropic también puedes poner un límite mensual de gasto.
+> ⚠️ **Privacidad en el plan gratuito de Gemini:** según los términos de Google, en el plan gratuito
+> las conversaciones se usan para mejorar sus productos y **pueden ser leídas por revisores humanos**;
+> Google pide no enviar información sensible ni personal. En el **plan de pago** de Gemini (activando
+> la facturación en AI Studio) Google no usa los datos. Para conversaciones de salud mental, lo más
+> responsable es el plan de pago (Gemini o Claude). El aviso del chat pide a las personas no compartir
+> datos que las identifiquen.
+
+### Opción B: Claude (de pago)
+1. Crea una cuenta en <https://platform.claude.com>, agrega un método de pago y crea una **API key**.
+2. Propiedad del script: `ANTHROPIC_API_KEY` = tu clave (y **no** pongas `GEMINI_API_KEY`).
+3. Ejecuta **`probarIA`**.
+
+Costo aproximado: unos USD 0,01 a 0,03 por mensaje con `claude-opus-5-5`. Anthropic no usa las
+conversaciones de la API para entrenar.
+
+**Para cualquiera de las dos:** `IA_MAX_MENSAJES_DIA` (300 por defecto) limita los mensajes diarios.
+**Las claves nunca van en la página ni en GitHub**, solo en las Propiedades del script.
 
 **Seguridad clínica:**
 - Antes de chatear, la persona acepta que es un asistente automático y no un psicólogo.

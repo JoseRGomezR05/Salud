@@ -23,8 +23,9 @@
  *   enviarRecordatorios → cada día a las 7 a. m., citas de mañana
  *   revisarPagos        → cada hora, cancela las citas sin pago a tiempo
  *
- * Asistente con IA (virtual.html): usa la API de Claude. La clave se
- * guarda en Propiedades del script como ANTHROPIC_API_KEY.
+ * Asistente con IA (virtual.html): usa Gemini (Google, con plan gratuito)
+ * si existe la propiedad GEMINI_API_KEY; si no, Claude (Anthropic) con
+ * ANTHROPIC_API_KEY. Las claves van en Propiedades del script.
  *
  * La clave del panel se guarda en las Propiedades del script
  * (CLAVE_ADMIN), nunca en este archivo.
@@ -1111,9 +1112,9 @@ function eliminarBloqueo(d) {
 // ------------------------------------------------------------
 // ASISTENTE DE ORIENTACIÓN CON IA (Claude) — virtual.html
 // ------------------------------------------------------------
-// La clave de la API se guarda en Propiedades del script como
-// ANTHROPIC_API_KEY (nunca en este archivo ni en la página).
-const MODELO_IA = 'claude-opus-5-5';
+// La clave se guarda en Propiedades del script: GEMINI_API_KEY (Gemini)
+// o ANTHROPIC_API_KEY (Claude). Nunca en este archivo ni en la página.
+const MODELO_IA = 'claude-opus-5-5';   // modelo de Claude (si se usa Claude)
 const IA_MAX_MENSAJES_DIA = 300;        // tope diario de mensajes para controlar el costo
 const IA_MAX_MENSAJES_CONVERSACION = 30;
 const IA_MAX_CARACTERES = 1500;
@@ -1202,20 +1203,65 @@ function chatIA(d) {
     return { ok: true, respuesta: RESPUESTA_CRISIS, riesgo: 'alto', derivar: true, crisis: true, disponibles: proximasHoras(d).profesionales };
   }
 
-  const clave = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
-  if (!clave) return { ok: false, sinIA: true, error: 'El asistente con IA todavía no está activado.' };
+  // 2) ¿Qué IA usar? Gemini si hay GEMINI_API_KEY, si no Claude con ANTHROPIC_API_KEY
+  const props = PropertiesService.getScriptProperties();
+  const claveGemini = props.getProperty('GEMINI_API_KEY');
+  const claveClaude = props.getProperty('ANTHROPIC_API_KEY');
+  if (!claveGemini && !claveClaude) return { ok: false, sinIA: true, error: 'El asistente con IA todavía no está activado.' };
 
-  // 2) Tope diario de mensajes
+  // 3) Tope diario de mensajes
   if (!sumarUsoIA()) {
     return { ok: false, error: 'El asistente recibió muchos mensajes hoy. Escríbenos por WhatsApp o agenda una cita.' };
   }
 
-  // 3) Consulta a Claude con respuesta estructurada (JSON)
+  const r = claveGemini ? consultarGemini(claveGemini, unirMensajes(mensajes)) : consultarClaude(claveClaude, unirMensajes(mensajes));
+  if (r.error) return { ok: false, error: r.error };
+
+  // La IA se negó a responder o lo bloqueó un filtro de seguridad: se remite a un profesional
+  if (r.rechazo) {
+    return { ok: true, respuesta: 'Sobre esto prefiero que hables con uno de nuestros psicólogos, que podrá ayudarte mejor. Abajo ves quién está disponible.',
+             riesgo: 'moderado', derivar: true, disponibles: proximasHoras(d).profesionales };
+  }
+
+  const salida = leerJSON(r.texto);
+  if (!salida) {
+    return { ok: true, respuesta: r.texto || 'No entendí bien. ¿Me lo puedes contar de otra forma?', riesgo: 'ninguno', derivar: false };
+  }
+
+  const riesgo = ['ninguno', 'bajo', 'moderado', 'alto'].indexOf(salida.riesgo) !== -1 ? salida.riesgo : 'ninguno';
+  const derivar = salida.derivar === true || riesgo === 'alto' || riesgo === 'moderado';
+  return {
+    ok: true,
+    respuesta: String(salida.respuesta || ''),
+    riesgo: riesgo,
+    derivar: derivar,
+    crisis: riesgo === 'alto',
+    disponibles: derivar ? proximasHoras(d).profesionales : undefined
+  };
+}
+
+// Lee el JSON de la respuesta aunque venga con texto o ```json alrededor
+function leerJSON(texto) {
+  if (!texto) return null;
+  try { return JSON.parse(texto); } catch (e) { /* se intenta extraer */ }
+  const m = String(texto).match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch (e) { return null; }
+}
+
+function mensajeErrorIA(codigo) {
+  return codigo === 429 || codigo === 529 || codigo === 503 ? 'El asistente está muy ocupado. Intenta de nuevo en un minuto.'
+    : codigo === 401 || codigo === 403 ? 'La clave del asistente no es válida. Avísale al administrador.'
+    : 'El asistente no está disponible en este momento. Intenta de nuevo más tarde.';
+}
+
+// ---------- Claude (Anthropic, de pago) ----------
+function consultarClaude(clave, mensajes) {
   const cuerpo = {
     model: MODELO_IA,
     max_tokens: 4000,
     system: [{ type: 'text', text: SISTEMA_IA, cache_control: { type: 'ephemeral' } }],
-    messages: unirMensajes(mensajes),
+    messages: mensajes,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: ESQUEMA_IA } },
     fallbacks: 'default'
   };
@@ -1224,52 +1270,68 @@ function chatIA(d) {
     respuesta = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method: 'post',
       contentType: 'application/json',
-      headers: {
-        'x-api-key': clave,
-        'anthropic-version': '2026-10-21',
-        'anthropic-beta': 'server-side-fallback-2026-07-01'
-      },
+      headers: { 'x-api-key': clave, 'anthropic-version': '2026-10-21', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
       payload: JSON.stringify(cuerpo),
       muteHttpExceptions: true
     });
   } catch (err) {
-    return { ok: false, error: 'No se pudo conectar con el asistente. Intenta de nuevo en un momento.' };
+    return { error: 'No se pudo conectar con el asistente. Intenta de nuevo en un momento.' };
   }
-
   const codigo = respuesta.getResponseCode();
-  const datos = JSON.parse(respuesta.getContentText() || '{}');
   if (codigo !== 200) {
     console.log('Error de la API de Claude ' + codigo + ': ' + respuesta.getContentText().slice(0, 500));
-    const mensaje = codigo === 429 || codigo === 529 ? 'El asistente está muy ocupado. Intenta de nuevo en un minuto.'
-      : codigo === 401 ? 'La clave del asistente no es válida. Avísale al administrador.'
-      : 'El asistente no está disponible en este momento. Intenta de nuevo más tarde.';
-    return { ok: false, error: mensaje };
+    return { error: mensajeErrorIA(codigo) };
   }
-
-  // La IA se negó a responder: se remite a un profesional
-  if (datos.stop_reason === 'refusal') {
-    return { ok: true, respuesta: 'Sobre esto prefiero que hables con uno de nuestros psicólogos, que podrá ayudarte mejor. Abajo ves quién está disponible.',
-             riesgo: 'moderado', derivar: true, disponibles: proximasHoras(d).profesionales };
-  }
-
+  const datos = JSON.parse(respuesta.getContentText() || '{}');
+  if (datos.stop_reason === 'refusal') return { rechazo: true };
   const bloque = (datos.content || []).find(b => b.type === 'text');
-  let salida;
-  try {
-    salida = JSON.parse(bloque.text);
-  } catch (err) {
-    return { ok: true, respuesta: bloque && bloque.text ? bloque.text : 'No entendí bien. ¿Me lo puedes contar de otra forma?',
-             riesgo: 'ninguno', derivar: false };
-  }
+  return { texto: bloque ? bloque.text : '' };
+}
 
-  const derivar = !!salida.derivar || salida.riesgo === 'alto' || salida.riesgo === 'moderado';
-  return {
-    ok: true,
-    respuesta: String(salida.respuesta || ''),
-    riesgo: salida.riesgo,
-    derivar: derivar,
-    crisis: salida.riesgo === 'alto',
-    disponibles: derivar ? proximasHoras(d).profesionales : undefined
+// ---------- Gemini (Google, tiene plan gratuito) ----------
+// En el plan gratuito Google puede usar las conversaciones para mejorar sus
+// productos y personas pueden revisarlas. En el plan de pago no.
+const MODELO_GEMINI = 'gemini-3.8-flash';
+
+const FORMATO_JSON_GEMINI = '\n\nResponde SIEMPRE solo con un objeto JSON, sin texto antes ni después, con estos campos: ' +
+  '"respuesta" (texto para la persona), "riesgo" ("ninguno", "bajo", "moderado" o "alto"), ' +
+  '"derivar" (true o false) y "tema" (1 a 3 palabras).';
+
+function consultarGemini(clave, mensajes, sinEsquema) {
+  const config = { responseMimeType: 'application/json', maxOutputTokens: 4096 };
+  if (!sinEsquema) config.responseJsonSchema = ESQUEMA_IA;
+  const cuerpo = {
+    systemInstruction: { parts: [{ text: SISTEMA_IA + FORMATO_JSON_GEMINI }] },
+    contents: mensajes.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+    generationConfig: config
   };
+  let respuesta;
+  try {
+    respuesta = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + MODELO_GEMINI + ':generateContent', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-goog-api-key': clave },
+      payload: JSON.stringify(cuerpo),
+      muteHttpExceptions: true
+    });
+  } catch (err) {
+    return { error: 'No se pudo conectar con el asistente. Intenta de nuevo en un momento.' };
+  }
+  const codigo = respuesta.getResponseCode();
+  const textoRespuesta = respuesta.getContentText();
+  if (codigo !== 200) {
+    console.log('Error de la API de Gemini ' + codigo + ': ' + textoRespuesta.slice(0, 500));
+    // Si el modelo no acepta el esquema, se repite pidiendo solo JSON
+    if (codigo === 400 && !sinEsquema && /schema/i.test(textoRespuesta)) return consultarGemini(clave, mensajes, true);
+    return { error: mensajeErrorIA(codigo) };
+  }
+  const datos = JSON.parse(textoRespuesta || '{}');
+  if (datos.promptFeedback && datos.promptFeedback.blockReason) return { rechazo: true };
+  const candidato = (datos.candidates || [])[0];
+  if (!candidato) return { rechazo: true };
+  if (['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].indexOf(candidato.finishReason) !== -1) return { rechazo: true };
+  const partes = ((candidato.content || {}).parts || []).filter(p => p.text && !p.thought);
+  return { texto: partes.map(p => p.text).join('') };
 }
 
 // La API exige que los mensajes alternen usuario/asistente: se unen los seguidos
