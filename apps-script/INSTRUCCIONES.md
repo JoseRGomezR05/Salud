@@ -145,6 +145,43 @@ como **Atendida** en la pestaña Citas para que los ingresos sean exactos.
 
 ---
 
+## Asistente con inteligencia artificial (virtual.html)
+
+El asistente de orientación usa la API de Claude (Anthropic). **Tiene costo por uso** y se paga con una
+cuenta de Anthropic; sin la clave, la página funciona pero el asistente responde que no está activado
+(la detección de crisis y la lista de profesionales sí funcionan).
+
+1. Crea una cuenta en <https://platform.claude.com>, agrega un método de pago y crea una **API key**
+   (empieza por `sk-ant-`).
+2. En Apps Script: **⚙️ Configuración del proyecto → Propiedades del script → Agregar propiedad**:
+   - Propiedad: `ANTHROPIC_API_KEY`
+   - Valor: tu clave
+3. Ejecuta **`probarIA`**: en el registro debe aparecer una respuesta del asistente.
+
+**La clave nunca va en la página ni en GitHub**: solo en las Propiedades del script.
+
+**Costo aproximado:** unos USD 0,01 a 0,03 por mensaje con el modelo `claude-opus-5-5`.
+`IA_MAX_MENSAJES_DIA` (300 por defecto) limita el gasto diario; puedes bajarlo. En la consola de
+Anthropic también puedes poner un límite mensual de gasto.
+
+**Seguridad clínica:**
+- Antes de chatear, la persona acepta que es un asistente automático y no un psicólogo.
+- Si un mensaje contiene señales de crisis (suicidio, autolesión, abuso, violencia), el script **no
+  consulta a la IA**: responde de inmediato con las líneas 192, 106 y 123 y muestra a los psicólogos
+  disponibles.
+- La IA tiene prohibido diagnosticar, hablar de medicamentos o pedir datos personales, y debe remitir a
+  un psicólogo cuando el caso lo amerita. Las reglas están en `SISTEMA_IA` de `Codigo.gs`.
+- Las conversaciones **no se guardan** en la hoja.
+
+## Videollamadas
+
+Al reservar, el paciente elige **Presencial** o **Virtual**. Cada cita virtual confirmada tiene su propia
+sala de **Jitsi Meet** (gratis, sin instalar nada):
+- El paciente la abre desde el correo de confirmación o desde *Mi cita* (se habilita 15 minutos antes).
+- Tú la abres desde Panel → Citas → **🎥 Videollamada**.
+- La primera vez que entres como profesional, Jitsi puede pedirte iniciar sesión (con Google) para abrir
+  la sala; el paciente espera en la sala hasta que entres.
+
 ## Capacidad (plan gratis de Google)
 
 | Límite | Valor aproximado | ¿Qué significa? |

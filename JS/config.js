@@ -27,6 +27,12 @@ const PROFESIONALES = [
     'Laura Torregrosa Sanjuanelo'
 ];
 
+// Datos que se muestran de cada profesional (asistente y página virtual)
+const PROFESIONALES_INFO = {
+    'José Rafael Gómez': { titulo: 'Psicólogo clínico', especialidad: 'Terapia individual, de pareja y familiar' },
+    'Laura Torregrosa Sanjuanelo': { titulo: 'Psicóloga clínica', especialidad: 'Terapia infantil y juvenil, ansiedad' }
+};
+
 // Políticas e indicaciones que el paciente acepta al reservar.
 // Deben ser iguales a POLITICAS e INDICACIONES de apps-script/Codigo.gs
 // (allí se usan para el comprobante en PDF y los correos).

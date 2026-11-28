@@ -151,6 +151,11 @@ async function descargarComprobante(id, token) {
     setTimeout(() => URL.revokeObjectURL(enlace.href), 10000);
 }
 
+// Sala de videollamada de una cita virtual (Jitsi Meet). Igual que enlaceVideo de Codigo.gs.
+function enlaceVideollamada(cita) {
+    return 'https://meet.jit.si/BienestarEmocional-' + cita.id + '-' + String(cita.token || '').slice(0, 6);
+}
+
 const ESTADOS_CITA = {
     pendiente: 'Pendiente de aceptación', confirmada: 'Confirmada', atendida: 'Atendida',
     cancelada: 'Cancelada', rechazada: 'Rechazada'
@@ -442,6 +447,7 @@ if (pagina('agendas')) (function () {
             `📧 *Email:* ${formData.email}\n` +
             `📅 *Fecha:* ${formatDate(formData.date)}\n` +
             `⏰ *Hora:* ${formData.time}\n` +
+            `📍 *Modalidad:* ${formData.modalidad === 'virtual' ? 'Virtual (videollamada)' : 'Presencial'}\n` +
             `🏥 *Servicios Seleccionados:*\n• ${getSelectedServicesText()}\n` +
             `💰 *Precio Total:* ${formattedPrice}\n` +
             `💭 *Mensaje:* ${formData.message || 'No se incluyó mensaje adicional'}\n\n` +
@@ -502,7 +508,8 @@ if (pagina('agendas')) (function () {
             email: document.getElementById('email').value,
             date: document.getElementById('date').value,
             time: document.getElementById('time').value,
-            message: document.getElementById('message').value
+            message: document.getElementById('message').value,
+            modalidad: document.getElementById('modalidad').value
         };
 
         // Generar mensaje y URL de WhatsApp
@@ -581,6 +588,7 @@ if (pagina('agendas')) (function () {
             profesional: selectedProfessional,
             servicios: getSelectedServicesText().replace(/\n• /g, ', '),
             valor: calculateTotalPrice(),
+            modalidad: formData.modalidad,
             nombre: formData.name,
             telefono: formData.phone,
             correo: formData.email,
@@ -811,6 +819,26 @@ if (pagina('agendas')) (function () {
         }
     }
 
+    // Llegar desde el asistente con profesional, fecha y hora: Agendas.html?profesional=...&fecha=...&hora=...
+    async function aplicarParametros() {
+        const p = new URLSearchParams(location.search);
+        const nombre = p.get('profesional');
+        if (!nombre) return;
+        const tarjeta = Array.from(professionalCards).find(c => c.querySelector('h3').textContent.trim() === nombre);
+        if (tarjeta) tarjeta.click();
+        if (p.get('fecha') && /^\d{4}-\d{2}-\d{2}$/.test(p.get('fecha'))) {
+            dateInput.value = p.get('fecha');
+            validateDate({ target: dateInput });
+            await checkTimeAvailability();
+            const hora = p.get('hora');
+            const opcion = Array.from(document.getElementById('time').options).find(o => o.value === hora && !o.disabled);
+            if (opcion) document.getElementById('time').value = hora;
+            updateSubmitButtonState();
+        }
+        const destino = tarjeta || document.querySelector('.services-grid');
+        if (destino) destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     // Mostrar indicaciones y políticas (JS/config.js)
     if (typeof POLITICAS !== 'undefined') {
         document.getElementById('listaIndicaciones').innerHTML = INDICACIONES.map(t => `<li>${esc(t)}</li>`).join('');
@@ -822,6 +850,7 @@ if (pagina('agendas')) (function () {
         configureDateInput();
         setupFormValidation();
         updateSubmitButtonState();
+        aplicarParametros();
         enhanceTouchExperience();
         loadSavedFormData();
 
@@ -869,508 +898,242 @@ if (pagina('agendas')) (function () {
 
 
 // ============================================================
-// ATENCIÓN VIRTUAL: videollamada y chats
+// ATENCIÓN VIRTUAL: asistente con IA, prueba de cámara y profesionales
 // ============================================================
+// El asistente usa la API de Claude a través de Google Apps Script
+// (acción chatIA). La clave de la API nunca llega a la página.
 if (pagina('virtual')) (function () {
-    // Variables para el manejo de la videollamada
-    let localStream;
-    let remoteStream;
-    let isCallActive = false;
-    let isMuted = false;
-    let isVideoOff = false;
-    let isScreenSharing = false;
+    const $ = id => document.getElementById(id);
 
-    // Iniciar la aplicación cuando el DOM esté cargado
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar la videollamada
-        initVideoCall();
+    // Señales de crisis: se revisan también aquí para responder al instante
+    const PATRON_CRISIS = /suicid|matarme|quitarme la vida|acabar con mi vida|no quiero vivir|quiero morir|me quiero morir|mejor muert|hacerme da[nñ]o|cortarme|me corto|autolesi|lastimarme|me violaron|violaci[oó]n|abus[oó] (sexual|de m[ií])|abusaron|me pega|me golpea|maltrat|matar a|hacerle da[nñ]o a/i;
 
-        // Configurar ambos chats
-        setupChat('.chat-input input', '.chat-messages', '.chat-input .send-btn', false);
-        setupChat('.ai-input input', '.ai-messages', '.ai-input .send-btn', true);
+    // ---------- Profesionales y próximas horas ----------
+    function fechaCorta(fecha) {
+        const [a, m, d] = fecha.split('-').map(Number);
+        const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        const dia = new Date(a, m - 1, d);
+        const diferencia = Math.round((dia - hoy) / 86400000);
+        if (diferencia === 0) return 'Hoy';
+        if (diferencia === 1) return 'Mañana';
+        const texto = dia.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
 
-        // Simulación de carga de documentos
-        const uploadBtn = document.querySelector('.upload-btn');
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', function() {
-                openFileSelector();
-            });
+    function enlaceAgenda(profesional, fecha, hora) {
+        const p = new URLSearchParams({ profesional });
+        if (fecha) p.set('fecha', fecha);
+        if (hora) p.set('hora', hora);
+        return 'Agendas.html?' + p.toString();
+    }
+
+    function tarjetasProfesionales(lista) {
+        return lista.map(p => {
+            const info = (typeof PROFESIONALES_INFO !== 'undefined' && PROFESIONALES_INFO[p.nombre]) || {};
+            const horas = (p.libres || []).map(l =>
+                `<a class="v-hora" href="${esc(enlaceAgenda(p.nombre, l.fecha, l.hora))}">${esc(fechaCorta(l.fecha))} · ${esc(l.hora)}</a>`).join('');
+            return `
+                <article class="v-profesional">
+                    <div class="v-profesional-info">
+                        <strong>${esc(p.nombre)}</strong>
+                        <span>${esc(info.titulo || 'Psicólogo(a)')}${info.especialidad ? ' · ' + esc(info.especialidad) : ''}</span>
+                    </div>
+                    <div class="v-horas">${horas || '<span class="v-sin-horas">Sin horas libres en los próximos días</span>'}</div>
+                    <a class="v-btn v-btn-pequeno" href="${esc(enlaceAgenda(p.nombre))}">Ver todas las horas</a>
+                </article>`;
+        }).join('');
+    }
+
+    let ultimosDisponibles = null;
+
+    async function cargarProfesionales() {
+        const caja = $('vProfesionales');
+        const sinDatos = () => PROFESIONALES.map(nombre => ({ nombre, libres: [] }));
+        if (!apiActiva()) { caja.innerHTML = tarjetasProfesionales(sinDatos()); return; }
+        try {
+            const r = await llamarAPI('proximasHoras', { profesionales: PROFESIONALES, horas: HORAS_CITA, duracion: 60 });
+            if (r.ok) ultimosDisponibles = r.profesionales;
+            caja.innerHTML = tarjetasProfesionales(r.ok ? r.profesionales : sinDatos());
+        } catch (e) {
+            caja.innerHTML = tarjetasProfesionales(sinDatos());
+        }
+    }
+    cargarProfesionales();
+
+    // ---------- Asistente ----------
+    const mensajes = [];   // historial que se envía a la IA: { role, content }
+    const caja = $('iaMensajes');
+    let ocupado = false;
+
+    function agregarBurbuja(rol, texto, extra = '') {
+        const div = document.createElement('div');
+        div.className = 'v-msj ' + (rol === 'user' ? 'v-msj-usuario' : 'v-msj-asistente');
+        div.innerHTML = `<div class="v-burbuja"></div>${extra}`;
+        div.querySelector('.v-burbuja').textContent = texto;
+        caja.appendChild(div);
+        caja.scrollTop = caja.scrollHeight;
+        return div;
+    }
+
+    function bloqueDerivacion(disponibles, crisis) {
+        return (crisis ? `
+            <div class="v-crisis" role="alert">
+                <strong>Si estás en peligro, pide ayuda ahora:</strong>
+                <a href="tel:192">📞 Línea 192 opción 4</a>
+                <a href="tel:106">📞 Línea 106</a>
+                <a href="tel:123">🚨 123 Emergencias</a>
+            </div>` : '') + `
+            <div class="v-derivacion">
+                <p><strong>Te recomendamos hablar con un psicólogo.</strong> Estos son los disponibles:</p>
+                ${tarjetasProfesionales(disponibles && disponibles.length ? disponibles
+                    : ultimosDisponibles || PROFESIONALES.map(nombre => ({ nombre, libres: [] })))}
+            </div>`;
+    }
+
+    function saludo() {
+        caja.innerHTML = '';
+        agregarBurbuja('assistant',
+            'Hola, soy el asistente de orientación de Bienestar Emocional. Estoy aquí para escucharte y darte información y herramientas para tu bienestar. ¿Cómo te sientes hoy o en qué te puedo ayudar?');
+    }
+
+    function habilitar(activo) {
+        $('iaTexto').disabled = !activo;
+        $('iaEnviar').disabled = !activo;
+        document.querySelectorAll('.v-chip').forEach(b => { b.disabled = !activo; });
+    }
+
+    $('iaAcepto').addEventListener('change', () => {
+        const ok = $('iaAcepto').checked;
+        habilitar(ok);
+        if (ok) {
+            $('iaAviso').classList.add('v-aviso-aceptado');
+            $('iaTexto').focus();
         }
     });
 
-    // Función para inicializar la videollamada
-    async function initVideoCall() {
-        // Elementos DOM para la videollamada
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const muteBtn = document.getElementById('muteBtn');
-        const videoBtn = document.getElementById('videoBtn');
-        const endCallBtn = document.getElementById('endCallBtn');
-        const screenShareBtn = document.getElementById('screenShareBtn');
-        const statusIndicator = document.querySelector('.status-indicator');
+    async function enviar(texto) {
+        texto = texto.trim().slice(0, 1500);
+        if (!texto || ocupado || !$('iaAcepto').checked) return;
+        ocupado = true;
+        habilitar(false);
+        $('iaSugerencias').hidden = true;
+        agregarBurbuja('user', texto);
+        mensajes.push({ role: 'user', content: texto });
+        $('iaTexto').value = '';
+        ajustarAltura();
 
-        // Verificar si los elementos existen
-        if (!localVideo || !remoteVideo) {
-            console.error('Elementos de video no encontrados');
-            return;
-        }
+        // Respuesta inmediata ante señales de crisis, aunque no haya conexión
+        const crisisLocal = PATRON_CRISIS.test(texto);
+        const escribiendo = agregarBurbuja('assistant', 'Escribiendo…');
+        escribiendo.classList.add('v-escribiendo');
 
+        let r = null;
         try {
-            // Obtener acceso a la cámara y micrófono del usuario
-            localStream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
-
-            // Mostrar el video local
-            localVideo.srcObject = localStream;
-
-            // Configurar una conexión "simulada" para demostración
-            setupDemoConnection(statusIndicator);
-
-            // Agregar event listeners para los botones de control
-            if (muteBtn) muteBtn.addEventListener('click', toggleMute);
-            if (videoBtn) videoBtn.addEventListener('click', toggleVideo);
-            if (endCallBtn) endCallBtn.addEventListener('click', endCall);
-            if (screenShareBtn) screenShareBtn.addEventListener('click', toggleScreenShare);
-
-            console.log('Inicialización de videollamada completada');
-            if (statusIndicator) statusIndicator.textContent = 'Listo para llamar';
-
-        } catch (error) {
-            console.error('Error al inicializar videollamada:', error);
-            if (statusIndicator) {
-                statusIndicator.textContent = 'Error: No se pudo acceder a la cámara/micrófono';
-            }
-
-            // Mostrar mensaje de error al usuario
-            showNotification('No se pudo acceder a la cámara o micrófono. Por favor, verifica los permisos del navegador.', 'error');
+            if (!apiActiva()) throw new Error('sin api');
+            r = await llamarAPI('chatIA', { mensajes, profesionales: PROFESIONALES, horas: HORAS_CITA });
+        } catch (e) {
+            r = null;
         }
-    }
+        escribiendo.remove();
 
-    // Configurar una "llamada" de demostración
-    function setupDemoConnection(statusIndicator) {
-        // Simular una llamada entrante después de unos segundos
-        setTimeout(() => {
-            if (statusIndicator) statusIndicator.textContent = 'Llamada entrante...';
-
-            // Mostrar notificación de llamada entrante
-            showCallNotification('Dr. Jose Gomez', function(accepted) {
-                if (accepted) {
-                    startCall();
-                } else {
-                    if (statusIndicator) statusIndicator.textContent = 'Llamada rechazada';
-                    setTimeout(() => {
-                        if (statusIndicator) statusIndicator.textContent = 'Listo para llamar';
-                    }, 3000);
-                }
-            });
-        }, 5000);
-    }
-
-    // Iniciar una llamada
-    function startCall() {
-        const remoteVideo = document.getElementById('remoteVideo');
-        const statusIndicator = document.querySelector('.status-indicator');
-
-        // En una implementación real, aquí se configuraría WebRTC
-        isCallActive = true;
-
-        if (statusIndicator) statusIndicator.textContent = 'En llamada';
-        showNotification('Llamada conectada', 'success');
-
-        // Simular video remoto (en una implementación real sería el flujo del otro participante)
-        // Para esta demo, simplemente clonamos nuestro propio stream
-        if (localStream && remoteVideo) {
-            remoteStream = localStream.clone();
-            remoteVideo.srcObject = remoteStream;
-        }
-
-        // Iniciar temporizador de llamada
-        startCallTimer();
-
-        console.log('Llamada iniciada');
-    }
-
-    // Finalizar la llamada
-    function endCall() {
-        const remoteVideo = document.getElementById('remoteVideo');
-        const statusIndicator = document.querySelector('.status-indicator');
-
-        if (!isCallActive) return;
-
-        isCallActive = false;
-
-        if (statusIndicator) statusIndicator.textContent = 'Llamada finalizada';
-        showNotification('Llamada finalizada', 'info');
-
-        // Detener temporizador de llamada
-        stopCallTimer();
-
-        // Detener video remoto
-        if (remoteVideo && remoteVideo.srcObject) {
-            const tracks = remoteVideo.srcObject.getTracks();
-            tracks.forEach(track => track.stop());
-            remoteVideo.srcObject = null;
-        }
-
-        console.log('Llamada finalizada');
-
-        // Restaurar estado después de unos segundos
-        setTimeout(() => {
-            if (statusIndicator) statusIndicator.textContent = 'Listo para llamar';
-            setupDemoConnection(statusIndicator);
-        }, 5000);
-    }
-
-    // Activar/desactivar micrófono
-    function toggleMute() {
-        const muteBtn = document.getElementById('muteBtn');
-
-        if (!localStream) return;
-
-        isMuted = !isMuted;
-        localStream.getAudioTracks().forEach(track => {
-            track.enabled = !isMuted;
-        });
-
-        if (muteBtn) {
-            muteBtn.title = isMuted ? 'Activar micrófono' : 'Silenciar';
-            muteBtn.innerHTML = isMuted 
-                ? '<svg class="icon" viewBox="0 0 24 24"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"></path></svg>' 
-                : '<svg class="icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>';
-        }
-
-        showNotification('Micrófono ' + (isMuted ? 'silenciado' : 'activado'), 'info');
-        console.log('Micrófono ' + (isMuted ? 'silenciado' : 'activado'));
-    }
-
-    // Activar/desactivar video
-    function toggleVideo() {
-        const videoBtn = document.getElementById('videoBtn');
-
-        if (!localStream) return;
-
-        isVideoOff = !isVideoOff;
-        localStream.getVideoTracks().forEach(track => {
-            track.enabled = !isVideoOff;
-        });
-
-        if (videoBtn) {
-            videoBtn.title = isVideoOff ? 'Activar video' : 'Desactivar video';
-            videoBtn.innerHTML = isVideoOff 
-                ? '<svg class="icon" viewBox="0 0 24 24"><path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.54-.18L19.73 21 21 19.73 3.27 2z"></path></svg>' 
-                : '<svg class="icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"></path></svg>';
-        }
-
-        showNotification('Cámara ' + (isVideoOff ? 'desactivada' : 'activada'), 'info');
-        console.log('Video ' + (isVideoOff ? 'desactivado' : 'activado'));
-    }
-
-    // Compartir pantalla
-    async function toggleScreenShare() {
-        const screenShareBtn = document.getElementById('screenShareBtn');
-        const localVideo = document.getElementById('localVideo');
-
-        if (!localVideo) return;
-
-        if (isScreenSharing) {
-            // Restaurar cámara
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
-                localVideo.srcObject = localStream;
-                isScreenSharing = false;
-
-                if (screenShareBtn) screenShareBtn.title = 'Compartir pantalla';
-                showNotification('Compartición de pantalla finalizada', 'info');
-                console.log('Pantalla compartida detenida');
-            } catch (error) {
-                console.error('Error al restaurar cámara:', error);
-                showNotification('Error al restaurar cámara', 'error');
-            }
+        if (r && r.ok) {
+            mensajes.push({ role: 'assistant', content: r.respuesta });
+            agregarBurbuja('assistant', r.respuesta, r.derivar ? bloqueDerivacion(r.disponibles, r.crisis || crisisLocal) : '');
+        } else if (crisisLocal) {
+            const respuesta = 'Gracias por contarlo. Lo que describes es importante y mereces apoyo de una persona ahora mismo. Si estás en peligro, llama ya a la Línea 192 opción 4, a la Línea 106 o al 123. También puedes hablar con uno de nuestros psicólogos.';
+            mensajes.push({ role: 'assistant', content: respuesta });
+            agregarBurbuja('assistant', respuesta, bloqueDerivacion(null, true));
         } else {
-            // Compartir pantalla
-            try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true
-                });
-
-                // Guardar la pista de audio original
-                const audioTrack = localStream.getAudioTracks()[0];
-
-                // Detener las pistas de video actuales
-                localStream.getVideoTracks().forEach(track => track.stop());
-
-                // Crear un nuevo stream con la pantalla y el audio original
-                const newStream = new MediaStream();
-                screenStream.getVideoTracks().forEach(track => {
-                    newStream.addTrack(track);
-                    // Evento para detectar cuando se detiene la compartición de pantalla
-                    track.addEventListener('ended', async () => {
-                        try {
-                            localStream = await navigator.mediaDevices.getUserMedia({
-                                video: true,
-                                audio: true
-                            });
-                            localVideo.srcObject = localStream;
-                            isScreenSharing = false;
-
-                            if (screenShareBtn) screenShareBtn.title = 'Compartir pantalla';
-                            showNotification('Compartición de pantalla finalizada', 'info');
-                            console.log('Pantalla compartida detenida');
-                        } catch (error) {
-                            console.error('Error al restaurar cámara:', error);
-                            showNotification('Error al restaurar cámara', 'error');
-                        }
-                    });
-                });
-
-                // Agregar pista de audio si existe
-                if (audioTrack) {
-                    newStream.addTrack(audioTrack);
-                }
-
-                // Asignar el nuevo stream
-                localStream = newStream;
-                localVideo.srcObject = localStream;
-
-                isScreenSharing = true;
-                if (screenShareBtn) screenShareBtn.title = 'Detener compartición';
-                showNotification('Compartiendo pantalla', 'success');
-                console.log('Compartiendo pantalla');
-            } catch (error) {
-                console.error('Error al compartir pantalla:', error);
-                showNotification('Error al compartir pantalla', 'error');
-            }
+            mensajes.pop();   // el mensaje no se procesó: no queda en el historial
+            const error = r && r.error ? r.error : 'No se pudo conectar con el asistente. Revisa tu internet e intenta de nuevo.';
+            agregarBurbuja('assistant', error + (r && r.sinIA ? ' Mientras tanto, puedes escribirnos por WhatsApp o agendar una cita.' : ''),
+                r && r.sinIA ? bloqueDerivacion(null, false) : '').classList.add('v-msj-error');
         }
+
+        ocupado = false;
+        habilitar(true);
+        $('iaTexto').focus();
     }
 
-    // Función para los chats (tanto normal como IA)
-    function setupChat(inputSelector, messagesSelector, btnSelector, isAI) {
-        const input = document.querySelector(inputSelector);
-        const messages = document.querySelector(messagesSelector);
-        const sendBtn = document.querySelector(btnSelector);
+    function ajustarAltura() {
+        const t = $('iaTexto');
+        t.style.height = 'auto';
+        t.style.height = Math.min(t.scrollHeight, 140) + 'px';
+    }
 
-        if (!input || !messages || !sendBtn) {
-            console.error('Elementos de chat no encontrados:', { inputSelector, messagesSelector, btnSelector });
+    $('iaFormulario').addEventListener('submit', e => { e.preventDefault(); enviar($('iaTexto').value); });
+    $('iaTexto').addEventListener('input', ajustarAltura);
+    $('iaTexto').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar($('iaTexto').value); }
+    });
+    document.querySelectorAll('.v-chip').forEach(b => b.addEventListener('click', () => enviar(b.textContent)));
+    $('iaNueva').addEventListener('click', () => {
+        mensajes.length = 0;
+        $('iaSugerencias').hidden = false;
+        saludo();
+    });
+
+    habilitar(false);
+    saludo();
+
+    // ---------- Prueba de cámara y micrófono ----------
+    let flujo = null;
+    let medidor = null;
+
+    async function probar() {
+        $('vMensaje').textContent = '';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            $('vMensaje').textContent = 'Tu navegador no permite usar la cámara. Prueba con Chrome, Edge o Safari actualizados.';
             return;
         }
-
-        sendBtn.addEventListener('click', function() {
-            sendChatMessage(input, messages, isAI);
-        });
-
-        // Permitir envío con Enter
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage(input, messages, isAI);
-            }
-        });
-    }
-
-    // Función para enviar mensaje de chat
-    function sendChatMessage(input, messages, isAI) {
-        if (input.value.trim() === '') return;
-
-        // Añadir mensaje del usuario
-        const userMsg = document.createElement('div');
-        userMsg.className = 'message user';
-        userMsg.textContent = input.value;
-        messages.appendChild(userMsg);
-
-        // Guardar el mensaje para procesarlo
-        const userMessage = input.value.trim();
-
-        // Limpiar input
-        input.value = '';
-
-        // Simular respuesta (en un caso real, aquí conectarías con backend/API)
-        setTimeout(function() {
-            const aiMsg = document.createElement('div');
-            aiMsg.className = 'message assistant';
-
-            if (isAI) {
-                // Procesamiento inteligente de mensajes para el asistente virtual
-                aiMsg.textContent = getAIResponse(userMessage);
-            } else {
-                aiMsg.textContent = "Tu mensaje ha sido recibido. Un profesional te responderá pronto.";
-            }
-
-            messages.appendChild(aiMsg);
-            messages.scrollTop = messages.scrollHeight;
-        }, 1000);
-
-        messages.scrollTop = messages.scrollHeight;
-    }
-
-    // Generar respuestas para el asistente virtual
-    function getAIResponse(message) {
-        // Convertir el mensaje a minúsculas para facilitar las comparaciones
-        const lowerMessage = message.toLowerCase();
-
-        // Palabras clave y sus respuestas
-        const keywords = {
-            'hola': '¡Hola! ¿En qué puedo ayudarte hoy con tu consulta de bienestar emocional?',
-            'saludos': '¡Saludos! Soy tu asistente virtual de Bienestar Emocional. ¿En qué puedo ayudarte?',
-            'ayuda': 'Puedo ayudarte con información sobre nuestros servicios, agendar citas o conectarte con un profesional. ¿Qué necesitas?',
-            'cita': 'Para agendar una cita, puedes indicarme tu disponibilidad y preferencia de profesional. También puedes usar nuestra sección "Agendar Cita" en el menú principal.',
-            'precio': 'Nuestras consultas tienen diferentes precios según el tipo de servicio y profesional. La consulta inicial tiene un costo aproximado de $50-80. ¿Te gustaría más información sobre algún servicio específico?',
-            'servicio': 'Ofrecemos servicios de terapia individual, terapia de pareja, terapia familiar, coaching de vida y apoyo en situaciones de crisis. ¿Sobre cuál te gustaría más información?',
-            'ansiedad': 'La ansiedad es una respuesta natural del cuerpo ante situaciones de estrés. Nuestros profesionales están capacitados para ayudarte con técnicas de manejo de ansiedad. ¿Te gustaría agendar una consulta?',
-            'depresión': 'Entendemos que la depresión puede ser difícil de manejar. Nuestros terapeutas especializados pueden ayudarte con un enfoque personalizado. ¿Necesitas hablar con alguien urgentemente?',
-            'estrés': 'El estrés crónico puede afectar tu bienestar físico y mental. Ofrecemos técnicas de manejo del estrés y mindfulness. ¿Te gustaría conocer algunas técnicas básicas?',
-            'llamada': 'Puedes iniciar una videollamada con un profesional usando los controles en la sección de videollamada. También ofrecemos consultas telefónicas si prefieres.',
-            'gracias': 'Ha sido un placer ayudarte. Estamos aquí para apoyar tu bienestar emocional. ¿Hay algo más en lo que pueda asistirte?',
-            'profesionales': 'Contamos con psicólogos, psiquiatras y coaches certificados con amplia experiencia en diferentes áreas. ¿Buscas ayuda en algún tema específico?'
-        };
-
-        // Revisar si el mensaje contiene alguna palabra clave
-        for (const [key, response] of Object.entries(keywords)) {
-            if (lowerMessage.includes(key)) {
-                return response;
-            }
+        try {
+            flujo = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (e) {
+            $('vMensaje').textContent = e.name === 'NotAllowedError'
+                ? 'No diste permiso para usar la cámara o el micrófono. Actívalo en el candado de la barra de direcciones.'
+                : 'No encontramos cámara o micrófono, o los está usando otra aplicación.';
+            return;
         }
+        $('vVideo').srcObject = flujo;
+        $('vVideoVacio').hidden = true;
+        $('vProbar').hidden = true;
+        $('vDetener').hidden = false;
+        $('vMicrofono').hidden = false;
+        $('vMensaje').textContent = '✓ Si te ves y la barra se mueve al hablar, todo está listo para tu sesión.';
 
-        // Respuesta por defecto si no se encuentra ninguna palabra clave
-        return "Gracias por tu mensaje. Estoy aquí para ayudarte con cualquier consulta sobre bienestar emocional. ¿Podrías darme más detalles sobre lo que necesitas?";
+        // Nivel del micrófono
+        try {
+            const contexto = new (window.AudioContext || window.webkitAudioContext)();
+            const analizador = contexto.createAnalyser();
+            analizador.fftSize = 256;
+            contexto.createMediaStreamSource(flujo).connect(analizador);
+            const datos = new Uint8Array(analizador.frequencyBinCount);
+            medidor = { contexto, id: 0 };
+            const dibujar = () => {
+                analizador.getByteFrequencyData(datos);
+                const promedio = datos.reduce((a, b) => a + b, 0) / datos.length;
+                $('vNivel').style.width = Math.min(100, promedio * 1.6) + '%';
+                medidor.id = requestAnimationFrame(dibujar);
+            };
+            dibujar();
+        } catch (e) { /* sin medidor de audio */ }
     }
 
-    // Mostrar notificaciones
-    function showNotification(message, type = 'info') {
-        // Crear elemento de notificación
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-
-        // Añadir al DOM
-        document.body.appendChild(notification);
-
-        // Mostrar con animación
-        setTimeout(() => {
-            notification.style.right = '20px';
-        }, 100);
-
-        // Eliminar después de 3 segundos
-        setTimeout(() => {
-            notification.style.right = '-300px';
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 500);
-        }, 3000);
+    function detener() {
+        if (flujo) flujo.getTracks().forEach(t => t.stop());
+        flujo = null;
+        if (medidor) { cancelAnimationFrame(medidor.id); medidor.contexto.close(); medidor = null; }
+        $('vVideo').srcObject = null;
+        $('vVideoVacio').hidden = false;
+        $('vProbar').hidden = false;
+        $('vDetener').hidden = true;
+        $('vMicrofono').hidden = true;
+        $('vMensaje').textContent = '';
     }
 
-    // Mostrar notificación de llamada entrante
-    function showCallNotification(caller, callback) {
-        // Crear el modal de notificación
-        const modal = document.createElement('div');
-        modal.className = 'call-notification';
-        modal.innerHTML = `
-            <div class="call-notification-content">
-                <div class="caller-avatar">
-                    <img src="/api/placeholder/80/80" alt="Avatar">
-                </div>
-                <h3>Llamada entrante</h3>
-                <p>${caller}</p>
-                <div class="call-actions">
-                    <button class="reject-call">Rechazar</button>
-                    <button class="accept-call">Aceptar</button>
-                </div>
-            </div>
-        `;
-
-        // Añadir al DOM
-        document.body.appendChild(modal);
-
-        // Reproducir sonido de llamada
-        const ringtone = new Audio();
-        ringtone.src = 'https://cdnjs.cloudflare.com/ajax/libs/sound-effects/1.0.0/ring.mp3';
-        ringtone.loop = true;
-        ringtone.play().catch(err => console.log('Audio playback prevented: ', err));
-
-        // Manejar clicks en los botones
-        modal.querySelector('.accept-call').addEventListener('click', () => {
-            ringtone.pause();
-            document.body.removeChild(modal);
-            callback(true);
-        });
-
-        modal.querySelector('.reject-call').addEventListener('click', () => {
-            ringtone.pause();
-            document.body.removeChild(modal);
-            callback(false);
-        });
-    }
-
-    // Iniciar temporizador de llamada
-    let callTimer;
-    let callDuration = 0;
-
-    function startCallTimer() {
-        const statusIndicator = document.querySelector('.status-indicator');
-        if (!statusIndicator) return;
-
-        callDuration = 0;
-        callTimer = setInterval(() => {
-            callDuration++;
-            const minutes = Math.floor(callDuration / 60);
-            const seconds = callDuration % 60;
-            statusIndicator.textContent = `En llamada: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        }, 1000);
-    }
-
-    // Detener temporizador de llamada
-    function stopCallTimer() {
-        clearInterval(callTimer);
-    }
-
-    // Simulación de selector de archivos
-    function openFileSelector() {
-        // Crear un input de tipo file invisible
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.jpg, .jpeg, .png, .pdf, .doc, .docx';
-        fileInput.style.display = 'none';
-
-        // Añadir al DOM
-        document.body.appendChild(fileInput);
-
-        // Simular click
-        fileInput.click();
-
-        // Manejar selección de archivo
-        fileInput.addEventListener('change', function() {
-            if (fileInput.files.length > 0) {
-                const fileName = fileInput.files[0].name;
-                showNotification(`Archivo seleccionado: ${fileName}`, 'success');
-
-                // Simular carga del archivo
-                setTimeout(() => {
-                    // Añadir mensaje al chat
-                    const chatMessages = document.querySelector('.chat-messages');
-                    if (chatMessages) {
-                        const fileMsg = document.createElement('div');
-                        fileMsg.className = 'message user';
-                        fileMsg.innerHTML = `<div class="file-attachment">📎 ${fileName}</div>`;
-                        chatMessages.appendChild(fileMsg);
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }
-                }, 500);
-            }
-
-            // Eliminar el input
-            document.body.removeChild(fileInput);
-        });
-    }
-
-    // Agregar estilos CSS necesarios para las nuevas funcionalidades
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-    `;
-
-    document.head.appendChild(styleElement);
+    $('vProbar').addEventListener('click', probar);
+    $('vDetener').addEventListener('click', detener);
+    window.addEventListener('pagehide', detener);
 })();
 
 
@@ -2660,7 +2423,7 @@ if (pagina('panel')) (function () {
                     <h3>${esc(fechaLarga(c.fecha))} · ${esc(c.hora)}
                         <span class="panel-badge ${clase}">${esc(ESTADOS_CITA[c.estado] || c.estado)}</span>
                         ${activa || c.pago === 'pagado' ? `<span class="panel-badge ${c.pago === 'pagado' ? 'ok' : 'alto'}">${c.pago === 'pagado' ? '💳 Pagada' : '💳 Sin pago'}</span>` : ''}</h3>
-                    <p><strong>${esc(c.nombre)}</strong> con ${esc(c.profesional)} · ${esc(c.duracion)} min${c.numero ? ' · N.º ' + esc(c.numero) : ''}</p>
+                    <p><strong>${esc(c.nombre)}</strong> con ${esc(c.profesional)} · ${esc(c.duracion)} min${c.numero ? ' · N.º ' + esc(c.numero) : ''} · ${c.modalidad === 'virtual' ? '🎥 Virtual' : '🏥 Presencial'}</p>
                     <p>${esc(c.servicios)}${Number(c.valor) ? ' · <strong>' + pesosCOP(c.valor) + '</strong>' : ''}</p>
                     <p>📞 ${esc(c.telefono)} · ✉️ ${esc(c.correo)}</p>
                     ${c.mensaje ? `<p class="panel-mensaje">💭 ${esc(c.mensaje)}</p>` : ''}
@@ -2671,6 +2434,7 @@ if (pagina('panel')) (function () {
                     ${c.estado === 'pendiente' ? `
                         <button type="button" class="panel-btn panel-btn-principal" data-responder="aceptar">✅ Aceptar</button>
                         <button type="button" class="panel-btn panel-btn-peligro" data-responder="rechazar">❌ Rechazar</button>` : ''}
+                    ${c.modalidad === 'virtual' && c.estado === 'confirmada' ? `<a class="panel-btn panel-btn-principal" target="_blank" rel="noopener" href="${esc(enlaceVideollamada(c))}">🎥 Videollamada</a>` : ''}
                     ${telefono ? `<a class="panel-btn" target="_blank" rel="noopener" href="https://wa.me/${telefono}?text=${encodeURIComponent(textoWhatsApp)}">📱 WhatsApp</a>` : ''}
                     ${activa ? `<button type="button" class="panel-btn" data-pago="${c.pago === 'pagado' ? 'pendiente' : 'pagado'}">${c.pago === 'pagado' ? '↺ Quitar pago' : '💳 Marcar pagada'}</button>` : ''}
                     ${c.estado === 'confirmada' ? `
@@ -3132,6 +2896,8 @@ if (pagina('cita') && !pagina('responder')) (async function () {
         $('citaHora').textContent = cita.hora;
         $('citaProfesional').textContent = cita.profesional;
         $('citaServicios').textContent = cita.servicios;
+        $('citaModalidad').textContent = cita.modalidad === 'virtual' ? '🎥 Virtual (videollamada)' : '🏥 Presencial';
+        pintarVideo(r.video);
         $('citaEstado').textContent = ESTADOS_CITA[cita.estado] || cita.estado;
         $('citaEstado').className = 'cita-estado ' + cita.estado;
         $('citaNumero').textContent = cita.numero || cita.id;
@@ -3160,6 +2926,25 @@ if (pagina('cita') && !pagina('responder')) (async function () {
         $('citaPoliticas').innerHTML = (r.politicas || []).map(t => `<li>${esc(t)}</li>`).join('');
         $('citaDetalle').hidden = false;
         $('citaCambio').hidden = true;
+    }
+
+    // La sala se habilita 15 minutos antes y hasta 30 minutos después de terminar
+    function pintarVideo(enlace) {
+        const caja = $('citaVideo');
+        caja.hidden = !enlace;
+        if (!enlace) return;
+        const [a, m, d] = cita.fecha.split('-').map(Number);
+        const inicio = new Date(a, m - 1, d, 0, minutosDeHora(cita.hora)).getTime();
+        const fin = inicio + ((parseInt(cita.duracion, 10) || 60) + 30) * 60000;
+        const ahora = Date.now();
+        const abierta = ahora >= inicio - 15 * 60000 && ahora <= fin;
+        $('citaVideoBtn').href = enlace;
+        $('citaVideoBtn').classList.toggle('cita-btn-desactivado', !abierta);
+        $('citaVideoTexto').textContent = abierta
+            ? 'Tu sala está abierta. Usa audífonos y un lugar tranquilo. Si es la primera vez, el navegador te pedirá permiso para usar la cámara y el micrófono.'
+            : ahora < inicio - 15 * 60000
+            ? 'La sala se habilita 15 minutos antes de tu cita. Mientras tanto, puedes probar tu cámara en la página Atención Virtual.'
+            : 'La sesión ya terminó.';
     }
 
     $('citaIcs').addEventListener('click', () => descargarICS(cita, detalleGestion()));
@@ -3277,7 +3062,7 @@ if (pagina('responder')) (async function () {
         $('respContacto').textContent = `${cita.telefono} · ${cita.correo}`;
         $('respFecha').textContent = `${fechaLarga(cita.fecha)} · ${cita.hora} (${cita.duracion} min)`;
         $('respProfesional').textContent = cita.profesional;
-        $('respServicios').textContent = cita.servicios;
+        $('respServicios').textContent = cita.servicios + (cita.modalidad === 'virtual' ? ' · 🎥 Virtual' : ' · 🏥 Presencial');
         $('respTotal').textContent = Number(cita.valor) ? pesosCOP(cita.valor) : '—';
         $('respMensajePaciente').textContent = cita.mensaje || '—';
         $('respEstado').textContent = ESTADOS_CITA[cita.estado] || cita.estado;

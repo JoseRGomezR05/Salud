@@ -2780,399 +2780,165 @@ margin-top: 10px;
    ATENCIÓN VIRTUAL (virtual.html)
    ============================================================ */
 
-/* Estilos generales que coinciden con el diseño actual */
-        :where(.pg-virtual) * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body:where(.pg-virtual) {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f2f2f2;
-            color: #333;
-        }
-        
-        
-        
-        
-        :where(.pg-virtual) .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            gap: 20px;
-        }
-        
-        /* Estilos específicos para la sección de atención virtual */
-        :where(.pg-virtual) .virtual-care {
-            display: flex;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            gap: 30px;
-        }
-        
-        :where(.pg-virtual) .video-section {
-            flex: 2;
-            display: flex;
-            min-width: 300px;
-            flex-direction: column;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            overflow: hidden;
-        }
-        
-        :where(.pg-virtual) .chat-section {
-            flex: 1;
-            min-width: 300px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            height: 500px;
-        }
-        
-        :where(.pg-virtual) .video-container {
-            flex: 1;
-            width: 100%;
-            height: 300px;
-            background-color: #1a202c;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        :where(.pg-virtual) .main-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background-color: #333;
-        }
-        
-        :where(.pg-virtual) .self-video {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 180px;
-            height: 120px;
-            border-radius: 8px;
-            border: 2px solid #fff;
-            background-color: #555;
-            object-fit: cover;
-            z-index: 10;
-        }
-        
-        :where(.pg-virtual) .video-controls {
-            display: flex;
-            justify-content: center;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-top: 1px solid #eaeaea;
-        }
-
-        :where(.pg-virtual) .control-btn {
-            margin: 0 10px;
-            background-color: #2a6496;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        :where(.pg-virtual) .control-btn:hover {
-            background-color: #1a4a6b;
-        }
-        
-        :where(.pg-virtual) .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background-color: #f8fafc;
-            border-radius: 8px 8px 0 0;
-        }
-        
-        :where(.pg-virtual) .message {
-            margin-bottom: 15px;
-            max-width: 80%;
-        }
-        
-        :where(.pg-virtual) .message.user {
-            margin-left: auto;
-            background-color: #2a6496;
-            color: white;
-            padding: 10px;
-            border-radius: 15px 15px 0 15px;
-        }
-        
-        :where(.pg-virtual) .message.assistant {
-            background-color: #e2e8f0;
-            padding: 10px;
-            border-radius: 15px 15px 15px 0;
-        }
-        
-        :where(.pg-virtual) .chat-input {
-            display: flex;
-            padding: 10px;
-            background-color: white;
-            border-top: 1px solid #e2e8f0;
-            border-radius: 0 0 8px 8px;
-        }
-        
-        :where(.pg-virtual) .chat-input input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        
-        :where(.pg-virtual) .upload-btn, :where(.pg-virtual) .send-btn {
-            background-color: #2a6496;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        :where(.pg-virtual) .upload-btn {
-            margin-right: 5px;
-        }
-        
-        /* Sección de IA */
-        :where(.pg-virtual) .ai-assistant {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            margin-top: 30px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }
-        
-        :where(.pg-virtual) .ai-header {
-            padding: 15px;
-            background-color: #2a6496;
-            color: white;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #050c07;
-        }
-        
-        :where(.pg-virtual) .ai-avatar {
-            width: 40px;
-            height: 40px;
-            background-color: #2a6496;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            margin-right: 10px;
-        }
-        
-        :where(.pg-virtual) .ai-chat {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            height: 300px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        :where(.pg-virtual) .ai-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            padding: 15px;
-            background-color: #f8fafc;
-        }
-        
-        :where(.pg-virtual) .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        :where(.pg-virtual) .ai-input {
-            display: flex;
-            padding: 15px;
-            background-color: white;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        :where(.pg-virtual) .ai-input input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            margin-right: 10px;
-            outline: none;
-            font-size: 14px;
-        }
-        
-        :where(.pg-virtual) .send-btn {
-    margin-left: 10px;
-    padding: 12px 20px;
-    background-color: #3cb6a0;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+body.pg-virtual > main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
 }
 
-:where(.pg-virtual) .send-btn:hover {
-    background-color: #2e9a87;
+:where(.pg-virtual) [hidden] { display: none !important; }
+
+:where(.pg-virtual) .v-hero { text-align: center; margin-bottom: 1.8rem; }
+:where(.pg-virtual) .v-hero h1 { font-family: 'Merriweather', Georgia, serif; color: var(--primary); font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 0.5rem; }
+:where(.pg-virtual) .v-hero p { color: var(--text-muted); max-width: 680px; margin: 0 auto; line-height: 1.6; }
+
+:where(.pg-virtual) .v-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+:where(.pg-virtual) .v-columna { display: grid; gap: 1.4rem; }
+
+:where(.pg-virtual) .v-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow);
 }
 
-@media (max-width: 768px) {
-    :where(.pg-virtual) .container {
-        flex-direction: column;
-    }
+:where(.pg-virtual) .v-card h2 { color: var(--primary); font-size: 1.2rem; margin: 0 0 0.5rem; }
+:where(.pg-virtual) .v-card > p { color: var(--text-muted); line-height: 1.55; margin: 0 0 1rem; font-size: 0.95rem; }
 
-    :where(.pg-virtual) .self-video {
-        width: 120px;
-        height: 80px;
-    }
-}
-
-:where(.pg-virtual) .status-indicator {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-:where(.pg-virtual) .icon {
-    width: 24px;
-    height: 24px;
-    fill: currentColor;
-}
-
-        /* Estilos responsivos */
-        @media (max-width: 768px) {
-            :where(.pg-virtual) .virtual-care {
-                flex-direction: column;
-            }
-        }
- /* Estilos para notificaciones */
- :where(.pg-virtual) .notification {
-    position: fixed;
-    top: 80px;
-    right: -300px;
-    width: 280px;
-    padding: 15px;
-    background-color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-radius: 8px;
-    z-index: 1000;
-    transition: right 0.3s ease-in-out;
-}
-
-:where(.pg-virtual) .notification.info {
-    border-left: 4px solid #2a6496;
-}
-
-:where(.pg-virtual) .notification.success {
-    border-left: 4px solid #38a169;
-}
-
-:where(.pg-virtual) .notification.error {
-    border-left: 4px solid #e53e3e;
-}
-
-/* Estilos para notificación de llamada */
-:where(.pg-virtual) .call-notification {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-:where(.pg-virtual) .call-notification-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 12px;
-    text-align: center;
-    width: 300px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-:where(.pg-virtual) .caller-avatar {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 15px;
-    border-radius: 50%;
-    overflow: hidden;
-    background-color: #e2e8f0;
-}
-
-:where(.pg-virtual) .caller-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-:where(.pg-virtual) .call-actions {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 20px;
-}
-
-:where(.pg-virtual) .accept-call, :where(.pg-virtual) .reject-call {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 30px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-:where(.pg-virtual) .accept-call {
-    background-color: #38a169;
-    color: white;
-}
-
-:where(.pg-virtual) .reject-call {
-    background-color: #e53e3e;
-    color: white;
-}
-
-/* Estilos para archivos adjuntos */
-:where(.pg-virtual) .file-attachment {
+/* Botones */
+:where(.pg-virtual) .v-btn {
     display: inline-block;
-    padding: 8px 12px;
-    background-color: rgba(49, 130, 206, 0.1);
+    padding: 10px 16px;
     border-radius: 8px;
-    margin-top: 5px;
+    border: 2px solid var(--border);
+    background: var(--white);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: center;
+}
+:where(.pg-virtual) .v-btn:hover { border-color: var(--primary-light); }
+:where(.pg-virtual) .v-btn-principal { background: var(--primary); border-color: var(--primary); color: var(--white); }
+:where(.pg-virtual) .v-btn-principal:hover { background: var(--primary-light); color: var(--white); }
+:where(.pg-virtual) .v-btn-pequeno { padding: 6px 10px; font-size: 13px; }
+:where(.pg-virtual) .v-btn-texto { background: none; border: none; color: var(--primary-light); font-weight: 600; cursor: pointer; font-family: inherit; margin-left: auto; }
+:where(.pg-virtual) .v-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Chat */
+:where(.pg-virtual) .v-chat { display: flex; flex-direction: column; min-height: 640px; padding: 0; overflow: hidden; }
+:where(.pg-virtual) .v-card-encabezado {
+    display: flex; align-items: center; gap: 12px;
+    padding: 1rem 1.2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+}
+:where(.pg-virtual) .v-card-encabezado h2 { color: var(--white); margin: 0; font-size: 1.1rem; }
+:where(.pg-virtual) .v-card-encabezado .v-btn-texto { color: rgba(255, 255, 255, 0.85); }
+:where(.pg-virtual) .v-avatar { border-radius: 50%; flex-shrink: 0; }
+:where(.pg-virtual) .v-estado { margin: 2px 0 0; font-size: 0.8rem; color: rgba(255, 255, 255, 0.75); }
+
+:where(.pg-virtual) .v-aviso-inicio {
+    margin: 1rem 1.2rem 0;
+    padding: 0.9rem 1rem;
+    background: #eef5fb;
+    border-left: 4px solid var(--primary-light);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text);
+}
+:where(.pg-virtual) .v-aviso-inicio p { margin: 0 0 0.5rem; }
+:where(.pg-virtual) .v-aviso-aceptado p { display: none; }
+:where(.pg-virtual) .v-aviso-aceptado { background: #e3f6ee; border-left-color: #2e9e6f; padding: 0.5rem 0.9rem; }
+:where(.pg-virtual) .v-check { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; cursor: pointer; }
+:where(.pg-virtual) .v-check input { width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0; }
+
+:where(.pg-virtual) .v-mensajes { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 10px; min-height: 280px; max-height: 520px; }
+:where(.pg-virtual) .v-msj { display: flex; flex-direction: column; max-width: 88%; }
+:where(.pg-virtual) .v-msj-usuario { align-self: flex-end; align-items: flex-end; }
+:where(.pg-virtual) .v-msj-asistente { align-self: flex-start; }
+:where(.pg-virtual) .v-burbuja {
+    padding: 10px 14px;
+    border-radius: 16px;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+:where(.pg-virtual) .v-msj-usuario .v-burbuja { background: var(--primary-light); color: var(--white); border-bottom-right-radius: 4px; }
+:where(.pg-virtual) .v-msj-asistente .v-burbuja { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+:where(.pg-virtual) .v-escribiendo .v-burbuja { color: var(--text-muted); font-style: italic; }
+:where(.pg-virtual) .v-msj-error .v-burbuja { background: #fff8e1; border-color: #f0d68a; }
+
+:where(.pg-virtual) .v-crisis {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: #fdecea; border: 2px solid #b3261e; color: #5f1410;
+    display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 0.9rem;
+}
+:where(.pg-virtual) .v-crisis strong { width: 100%; }
+:where(.pg-virtual) .v-crisis a { color: #b3261e; font-weight: 700; text-decoration: none; }
+:where(.pg-virtual) .v-derivacion { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); border: 1px solid #bfe7de; }
+:where(.pg-virtual) .v-derivacion > p { margin: 0 0 8px; font-size: 0.9rem; }
+
+:where(.pg-virtual) .v-sugerencias { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 1.2rem 0.6rem; }
+:where(.pg-virtual) .v-chip {
+    border: 1px solid var(--border); background: var(--white); color: var(--primary);
+    border-radius: 16px; padding: 6px 12px; font-size: 0.85rem; font-family: inherit; cursor: pointer;
+}
+:where(.pg-virtual) .v-chip:hover:not(:disabled) { border-color: var(--primary-light); background: #eef5fb; }
+:where(.pg-virtual) .v-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+:where(.pg-virtual) .v-entrada { display: flex; gap: 8px; padding: 0.8rem 1.2rem; border-top: 1px solid var(--border); align-items: flex-end; }
+:where(.pg-virtual) .v-entrada textarea {
+    flex: 1; resize: none; padding: 10px 12px; border: 2px solid var(--border); border-radius: 12px;
+    font-family: inherit; font-size: 15px; line-height: 1.4; max-height: 140px; background: var(--white); color: var(--text);
+}
+:where(.pg-virtual) .v-entrada textarea:focus { outline: none; border-color: var(--primary-light); }
+:where(.pg-virtual) .v-enviar {
+    width: 46px; height: 46px; border-radius: 50%; border: none; flex-shrink: 0;
+    background: var(--accent); color: var(--white); font-size: 18px; cursor: pointer;
+}
+:where(.pg-virtual) .v-enviar:disabled, :where(.pg-virtual) .v-entrada textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+:where(.pg-virtual) .v-pie { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin: 0; padding: 0 1rem 0.8rem; }
+:where(.pg-virtual) .v-pie a { color: #b3261e; font-weight: 700; }
+
+/* Profesionales */
+:where(.pg-virtual) .v-profesionales { display: grid; gap: 10px; margin-bottom: 1rem; }
+:where(.pg-virtual) .v-profesional { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--white); display: grid; gap: 8px; }
+:where(.pg-virtual) .v-profesional-info strong { display: block; color: var(--text); }
+:where(.pg-virtual) .v-profesional-info span { font-size: 0.85rem; color: var(--text-muted); }
+:where(.pg-virtual) .v-horas { display: flex; flex-wrap: wrap; gap: 6px; }
+:where(.pg-virtual) .v-hora {
+    padding: 5px 10px; border-radius: 14px; background: #e3f1fb; color: var(--primary);
+    font-size: 0.82rem; font-weight: 600; text-decoration: none;
+}
+:where(.pg-virtual) .v-hora:hover { background: var(--primary-light); color: var(--white); }
+:where(.pg-virtual) .v-sin-horas, :where(.pg-virtual) .v-cargando { font-size: 0.85rem; color: var(--text-muted); }
+:where(.pg-virtual) .v-profesional .v-btn { justify-self: start; }
+
+/* Videollamada y prueba */
+:where(.pg-virtual) .v-pasos { margin: 0 0 1rem 1.1rem; padding: 0; line-height: 1.6; color: var(--text); font-size: 0.92rem; }
+:where(.pg-virtual) .v-video { position: relative; aspect-ratio: 16 / 9; background: #10202d; border-radius: 12px; overflow: hidden; margin-bottom: 0.8rem; }
+:where(.pg-virtual) .v-video video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+:where(.pg-virtual) .v-video-vacio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; }
+:where(.pg-virtual) .v-microfono { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; font-size: 0.9rem; }
+:where(.pg-virtual) .v-nivel { flex: 1; height: 10px; background: #eceff3; border-radius: 5px; overflow: hidden; }
+:where(.pg-virtual) .v-nivel i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.08s linear; }
+:where(.pg-virtual) .v-mensaje-prueba { font-size: 0.88rem; color: var(--text-muted); min-height: 1.2em; margin: 0 0 0.8rem; }
+
+@media (max-width: 900px) {
+    :where(.pg-virtual) .v-grid { grid-template-columns: 1fr; }
+    :where(.pg-virtual) .v-chat { min-height: 560px; }
+}
+
+@media (max-width: 480px) {
+    :where(.pg-virtual) .v-card { padding: 1rem; }
+    :where(.pg-virtual) .v-chat { padding: 0; }
+    :where(.pg-virtual) .v-msj { max-width: 94%; }
 }
 
 
@@ -5190,6 +4956,11 @@ body.pg-panel > main {
 :where(.pg-panel) .res-tarjeta.leve { border-left-color: #e0a100; }
 :where(.pg-panel) .res-tarjeta.leve strong { color: #7a5200; }
 
+
+:where(.pg-cita) .cita-video { margin: 14px 0; padding: 14px; border-radius: 10px; background: #eef5fb; border: 1px solid #cfe2f2; }
+:where(.pg-cita) .cita-video .cita-btn { display: block; }
+:where(.pg-cita) .cita-btn-desactivado { opacity: 0.55; pointer-events: none; }
+
 /* Al imprimir el informe solo sale el informe */
 @media print {
     body.pg-panel .site-header,
@@ -5263,6 +5034,7 @@ body {
 body > div.container,
 body > main {
     width: 100%;
+    box-sizing: border-box;
     padding: 2rem 1rem;
     flex: 1;
 }
