@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Bienestar Emocional">
+  <title>Bienestar Emocional</title>
+  <!-- Fondo blanco para que se vea sobre colores oscuros -->
+  <circle cx="60" cy="60" r="58" fill="#ffffff"/>
+  <circle cx="60" cy="60" r="55" fill="none" stroke="#3cb6a0" stroke-width="2.5"/>
+  <!-- Cabeza -->
+  <circle cx="60" cy="33" r="11" fill="#1a4a6b"/>
+  <!-- Hoja izquierda (brazo) -->
+  <path d="M60 96 C 36 92, 20 74, 22 50 C 42 52, 57 68, 60 96 Z" fill="#3cb6a0"/>
+  <!-- Hoja derecha (brazo) -->
+  <path d="M60 96 C 84 92, 100 74, 98 50 C 78 52, 63 68, 60 96 Z" fill="#2a6496"/>
+  <!-- Nervaduras -->
+  <path d="M58 92 C 50 80, 40 66, 29 56" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/>
+  <path d="M62 92 C 70 80, 80 66, 91 56" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/>
+</svg>

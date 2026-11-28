@@ -409,7 +409,8 @@ if (pagina('agendas')) (function () {
             .map(card => {
                 const serviceName = card.querySelector('h3').textContent;
                 const price = card.querySelector('.price').textContent;
-                return `${serviceName} (${price})`;
+                const duration = card.dataset.duration;
+                return duration ? `${serviceName} (${duration} min · ${price})` : `${serviceName} (${price})`;
             })
             .join('\n• ');
     }

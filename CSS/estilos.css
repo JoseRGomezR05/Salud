@@ -5296,10 +5296,31 @@ body > main {
 }
 
 .site-brand {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+    align-items: center;
     text-decoration: none;
     color: var(--white);
+}
+
+/* Logo junto al nombre del sitio */
+.site-brand::before {
+    content: '';
+    grid-row: 1 / span 2;
+    width: 46px;
+    height: 46px;
+    background: url('../img/logo-icono.svg') center / contain no-repeat;
+}
+
+.site-brand .site-title,
+.site-brand .site-tagline {
+    grid-column: 2;
+}
+
+@media (max-width: 480px) {
+    .site-brand::before { width: 38px; height: 38px; }
+    .site-brand { column-gap: 9px; }
 }
 
 .site-brand:hover {
